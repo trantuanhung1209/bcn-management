@@ -74,7 +74,7 @@ export const Login = () => {
               type="text"
               id="name"
               name="name"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 outline-0 focus:ring-2 focus:ring-[#ccc]"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 outline-0 focus:ring-2 focus:ring-[#ccc] text-black"
               placeholder="Nhập tên đăng nhập"
               required
             />
@@ -93,7 +93,7 @@ export const Login = () => {
               type={passWordVisible ? "text" : "password"}
               id="password"
               name="password"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 outline-0 focus:ring-2 focus:ring-[#ccc]"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 outline-0 focus:ring-2 focus:ring-[#ccc] text-black"
               placeholder="Nhập mật khẩu"
               required
             />

@@ -22,7 +22,7 @@ export default function Home() {
   return (
     <>
       <ParticlesBackground />
-      <div className="container mx-auto" >
+      <div className="container mx-auto">
         <FirstTitle />
 
         <div className="inner-login flex flex-col items-center justify-center justify-center">

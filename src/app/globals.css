@@ -1,9 +1,30 @@
 @import "tailwindcss";
-
+@plugin "daisyui";
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
-*{
+* {
   font-family: "Roboto", sans-serif;
   box-sizing: border-box;
+}
+
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #969696 #f2e9e4;
+}
+
+/* Chrome, Edge, Safari */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  background: #f2e9e4;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #969696;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #424242;
 }
