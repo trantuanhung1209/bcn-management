@@ -8,19 +8,6 @@ interface Task {
   content: string;
 }
 
-interface Project {
-  projectName: string;
-  projectType: string;
-  projectLevel: string;
-  projectDeadline: string;
-  projectDescription: string;
-  fileName: string;
-  fileUrl: string;
-  projectTasks: Task[];
-  projectStatus: string;
-  projectId: string;
-}
-
 export const TaskItem = (props: {
   task: Task;
   index: number;
@@ -30,7 +17,7 @@ export const TaskItem = (props: {
   const { task, index, projectId, onTaskDeleted } = props;
 
   const deleteTask = (taskId?: string) => {
-    if (taskId) {
+    if (taskId && projectId) {
       Swal.fire({
         title: "Xóa nhiệm vụ",
         text: "Bạn có chắc chắn muốn xóa nhiệm vụ này?",
@@ -38,26 +25,21 @@ export const TaskItem = (props: {
         showCancelButton: true,
         confirmButtonText: "Xóa",
         cancelButtonText: "Hủy",
-      }).then((result) => {
+      }).then(async (result) => {
         if (result.isConfirmed) {
-          const projects = localStorage.getItem("projects");
-          const projectJson = projects ? JSON.parse(projects) : [];
-          const projectFilter = projectJson.filter(
-            (project: Project) => project.projectId === projectId
+          const response = await fetch(
+            `/api/projects/${projectId}/tasks/${taskId}`,
+            {
+              method: "DELETE",
+            }
           );
-          const projectUpdate = projectFilter[0];
-          if (projectUpdate) {
-            projectUpdate.tasks = projectUpdate.tasks.filter(
-              (task: Task) => task.id !== taskId
-            );
-            const updatedProjects = projectJson.map((project: Project) =>
-              project.projectId === projectId ? projectUpdate : project
-            );
-            localStorage.setItem("projects", JSON.stringify(updatedProjects));
-          }
-          Swal.fire("Đã xoá!", "Nhiệm vụ đã được xoá.", "success");
-          if (onTaskDeleted) {
-            onTaskDeleted();
+          if (response.ok) {
+            Swal.fire("Đã xoá!", "Nhiệm vụ đã được xoá.", "success");
+            if (onTaskDeleted) {
+              onTaskDeleted();
+            }
+          } else {
+            Swal.fire("Lỗi!", "Không thể xoá nhiệm vụ.", "error");
           }
         }
       });

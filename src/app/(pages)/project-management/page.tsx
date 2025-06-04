@@ -1,3 +1,4 @@
+import { ProjectManagementMember } from "@/app/components/Project-management/member/ProjectManagementMember";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 export default function MemberProjectManagement() {
   return (
     <div>
-      <h1>Member Project Management</h1>
+      <ProjectManagementMember />
     </div>
   );
 }

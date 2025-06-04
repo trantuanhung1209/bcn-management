@@ -1,3 +1,4 @@
+import { HomeMember } from "@/app/components/Home/HomeMember";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export const metadata: Metadata = {
 export default function MemberHome() {
   return (
     <div>
-      <h1>Member Home</h1>
+      <HomeMember />
     </div>
   );
 }

@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Loading from "../Loading";
-import ParticlesBackground from "../ParticlesBackground";
-import { Sider } from "../Sider/Sider";
+import Loading from "../../Loading";
+import ParticlesBackground from "../../ParticlesBackground";
+import { Sider } from "../../Sider/Sider";
 import { FormCreateProject } from "./FormCreateProject";
-import { ViewListTask } from "./ViewListTask";
+import { ViewListTask } from "./ViewListProjects";
 import { FormEditProject } from "./FormEditProject";
 
 export const ProjectManagementAdmin = () => {

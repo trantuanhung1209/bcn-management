@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 interface Task {
+  id: string;
   description: string;
   deadline: string;
   content: string;

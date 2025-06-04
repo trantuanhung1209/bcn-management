@@ -1,32 +1,80 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormCreateTask } from "./FormCreateTask";
 import Swal from "sweetalert2";
+import { TaskItem } from "./TaskItem";
 
 type FormCreateProjectProps = {
   cancelClick: () => void;
+  projectId: string | null;
 };
 
 interface Task {
+  id?: string;
   description: string;
   deadline: string;
   content: string;
 }
 
-export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
+interface Project {
+  projectName: string;
+  projectType: string;
+  projectLevel: string;
+  projectDeadline: string;
+  projectDescription: string;
+  fileName: string;
+  fileUrl: string;
+  tasks: Task[];
+  projectStatus: string;
+  projectId: string;
+}
+
+export const FormEditProject = ({
+  cancelClick,
+  projectId,
+}: FormCreateProjectProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [project, setProject] = useState<Project | null>(null);
+
+  useEffect(() => {
+    if (projectId) {
+      fetch(`/api/projects/${projectId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setProject(data.project);
+          setTasks(data.project.tasks || []);
+        });
+    }
+  }, [projectId]);
 
   // Hàm nhận task mới từ con
   const handleCreateTask = (task: Task) => {
     setTasks((prevTasks) => [...prevTasks, task]);
+    setProject((prev: Project | null) => {
+      if (prev) {
+        return {
+          ...prev,
+          tasks: [...(prev.tasks || []), task],
+        };
+      }
+      return null;
+    });
     const modal = document.getElementById(
       "my_modal_1"
     ) as HTMLDialogElement | null;
-    if (modal) {
-      modal.close();
+    if (modal) modal.close();
+  };
+
+  // Hàm để reload tasks sau khi xóa
+  const reloadTasks = () => {
+    // Lấy lại project từ localStorage và setTasks lại
+    if (projectId) {
+      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
+      const found = projects.find((p: Project) => p.projectId === projectId);
+      if (found) setTasks(found.tasks || []);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const projectName = (
@@ -57,12 +105,8 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
       fileName = projectFile.name;
     }
 
-    // Lấy danh sách task hiện tại từ state
-    const projectTasks = tasks; 
-
-    // Tạo object dự án
-    const projectData = {
-      projectId: Date.now().toString(), 
+    const updatedProject = {
+      ...project,
       projectName,
       projectType,
       projectLevel,
@@ -70,28 +114,31 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
       projectDescription,
       fileName,
       fileUrl,
-      tasks: projectTasks,
-      projectStatus: "Chưa triển khai", 
+      tasks,
     };
 
-    // Lưu vào localStorage (danh sách dự án)
-    const oldProjects = JSON.parse(localStorage.getItem("projects") || "[]");
-    const newProjects = [...oldProjects, projectData];
-    localStorage.setItem("projects", JSON.stringify(newProjects));
-
-    // Reset form và tasks nếu muốn
-    form.reset();
-    setTasks([]);
-    console.log("Dự án đã được tạo:", projectData);
-    Swal.fire({
-      title: "Thành công!",
-      text: "Bạn đã tạo dự án thành công.",
-      icon: "success",
-      confirmButtonText: "OK",
+    const response = await fetch(`/api/projects/${projectId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedProject),
     });
 
-    // Đóng modal nếu cần
-    cancelClick();
+    if (response.ok) {
+      Swal.fire({
+        title: "Thành công!",
+        text: "Bạn đã cập nhật dự án thành công.",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+      cancelClick();
+    } else {
+      Swal.fire({
+        title: "Lỗi!",
+        text: "Không thể cập nhật dự án.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
   };
 
   return (
@@ -102,7 +149,7 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
           onSubmit={handleSubmit}
         >
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            Tạo yêu cầu triển khai mới
+            Sửa dự án
           </h2>
           <div className="mb-4 flex gap-[40px] items-center">
             <label
@@ -117,6 +164,13 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
               name="projectName"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black "
               placeholder="Nhập tên dự án"
+              defaultValue={project ? project.projectName : ""}
+              required
+              onChange={(e) =>
+                setProject((prev) =>
+                  prev ? { ...prev, projectName: e.target.value } : null
+                )
+              }
             />
           </div>
 
@@ -131,7 +185,12 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
               id="projectType"
               name="projectType"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black"
-              defaultValue=""
+              defaultValue={project ? project.projectType : ""}
+              onChange={(e) =>
+                setProject((prev) =>
+                  prev ? { ...prev, projectType: e.target.value } : null
+                )
+              }
             >
               <option value="" disabled>
                 Chọn loại dự án
@@ -154,7 +213,12 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
               id="projectLevel"
               name="projectLevel"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black"
-              defaultValue=""
+              defaultValue={project ? project.projectLevel : ""}
+              onChange={(e) =>
+                setProject((prev) =>
+                  prev ? { ...prev, projectLevel: e.target.value } : null
+                )
+              }
             >
               <option value="" disabled>
                 Chọn cấp độ dự án
@@ -179,6 +243,13 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
               name="projectDeadline"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black"
               placeholder="Nhập thời hạn dự án"
+              defaultValue={project ? project.projectDeadline : ""}
+              required
+              onChange={(e) =>
+                setProject((prev) =>
+                  prev ? { ...prev, projectDeadline: e.target.value } : null
+                )
+              }
             />
           </div>
 
@@ -195,6 +266,13 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black"
               placeholder="Nhập mô tả dự án"
               rows={4}
+              defaultValue={project ? project.projectDescription : ""}
+              required
+              onChange={(e) =>
+                setProject((prev) =>
+                  prev ? { ...prev, projectDescription: e.target.value } : null
+                )
+              }
             ></textarea>
           </div>
 
@@ -211,6 +289,15 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
               name="projectFile"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black "
               placeholder="Thêm tên tệp đính kèm"
+              accept=".pdf,.doc,.docx,.txt,.jpg,.png"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setProject((prev) =>
+                    prev ? { ...prev, projectFile: file } : null
+                  );
+                }
+              }}
             />
           </div>
 
@@ -245,20 +332,18 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
                       <th>Thời hạn</th>
                       <th>Nội dung yêu cầu</th>
                       <th>Trạng thái</th>
+                      <th>Hành động</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-300 text-gray-700">
                     {tasks.map((task, index) => (
-                      <tr
+                      <TaskItem
                         key={index}
-                        className="hover:bg-gray-100 transition-colors duration-200 border-b border-gray-300"
-                      >
-                        <td>{index + 1}</td>
-                        <td>{task.description}</td>
-                        <td>{task.deadline}</td>
-                        <td>{task.content}</td>
-                        <td>Chưa hoàn thành</td>
-                      </tr>
+                        task={task}
+                        index={index}
+                        projectId={projectId}
+                        onTaskDeleted={reloadTasks}
+                      />
                     ))}
                   </tbody>
                 </table>
@@ -278,7 +363,7 @@ export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
               type="submit"
               className="py-[14px] px-[20px] bg-[#424242] text-white text-[16px] rounded-lg shadow-md hover:bg-[#1a1a1a] transition-colors duration-300 cursor-pointer transform hover:scale-105 active:scale-95 ease-in-out"
             >
-              Tạo dự án
+              Sửa dự án
             </button>
           </div>
         </form>

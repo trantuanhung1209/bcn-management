@@ -1,11 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FormCreateTask } from "./FormCreateTask";
 import Swal from "sweetalert2";
-import { TaskItem } from "./TaskItem";
 
 type FormCreateProjectProps = {
   cancelClick: () => void;
-  projectId: string | null;
 };
 
 interface Task {
@@ -14,68 +12,21 @@ interface Task {
   content: string;
 }
 
-interface Project {
-  projectName: string;
-  projectType: string;
-  projectLevel: string;
-  projectDeadline: string;
-  projectDescription: string;
-  fileName: string;
-  fileUrl: string;
-  tasks: Task[];
-  projectStatus: string;
-  projectId: string;
-}
-
-export const FormEditProject = ({
-  cancelClick,
-  projectId,
-}: FormCreateProjectProps) => {
+export const FormCreateProject = ({ cancelClick }: FormCreateProjectProps) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [project, setProject] = useState<Project | null>(null);
-
-  useEffect(() => {
-    if (projectId) {
-      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
-      const foundProject = projects.find(
-        (p: Project) => p.projectId === projectId
-      );
-      if (foundProject) {
-        setProject(foundProject);
-        setTasks(foundProject.tasks);
-      }
-    }
-  }, [projectId]);
 
   // Hàm nhận task mới từ con
   const handleCreateTask = (task: Task) => {
     setTasks((prevTasks) => [...prevTasks, task]);
-    setProject((prev: Project | null) => {
-      if (prev) {
-        return {
-          ...prev,
-          tasks: [...(prev.tasks || []), task],
-        };
-      }
-      return null;
-    });
     const modal = document.getElementById(
       "my_modal_1"
     ) as HTMLDialogElement | null;
-    if (modal) modal.close();
-  };
-
-  // Hàm để reload tasks sau khi xóa
-  const reloadTasks = () => {
-    // Lấy lại project từ localStorage và setTasks lại
-    if (projectId) {
-      const projects = JSON.parse(localStorage.getItem("projects") || "[]");
-      const found = projects.find((p: Project) => p.projectId === projectId);
-      if (found) setTasks(found.tasks || []);
+    if (modal) {
+      modal.close();
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const projectName = (
@@ -98,7 +49,6 @@ export const FormEditProject = ({
     ) as HTMLInputElement;
     const projectFile = projectFileInput.files && projectFileInput.files[0];
 
-    // Tạo URL cho file nếu có
     let fileUrl = "";
     let fileName = "";
     if (projectFile) {
@@ -106,8 +56,10 @@ export const FormEditProject = ({
       fileName = projectFile.name;
     }
 
-    const updatedProject = {
-      ...project,
+    const projectTasks = tasks;
+
+    const projectData = {
+      projectId: Date.now().toString(),
       projectName,
       projectType,
       projectLevel,
@@ -115,24 +67,35 @@ export const FormEditProject = ({
       projectDescription,
       fileName,
       fileUrl,
-      tasks,
+      tasks: projectTasks,
+      projectStatus: "Chưa triển khai",
     };
 
-    // Cập nhật vào localStorage
-    const oldProjects = JSON.parse(localStorage.getItem("projects") || "[]");
-    const newProjects = oldProjects.map((p: Project) =>
-      p.projectId === projectId ? updatedProject : p
-    );
-    localStorage.setItem("projects", JSON.stringify(newProjects));
-
-    Swal.fire({
-      title: "Thành công!",
-      text: "Bạn đã cập nhật dự án thành công.",
-      icon: "success",
-      confirmButtonText: "OK",
+    // Gửi dữ liệu lên API thay vì lưu localStorage
+    const response = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(projectData),
     });
 
-    cancelClick();
+    if (response.ok) {
+      form.reset();
+      setTasks([]);
+      Swal.fire({
+        title: "Thành công!",
+        text: "Bạn đã tạo dự án thành công.",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+      cancelClick();
+    } else {
+      Swal.fire({
+        title: "Lỗi!",
+        text: "Không thể tạo dự án.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
   };
 
   return (
@@ -143,7 +106,7 @@ export const FormEditProject = ({
           onSubmit={handleSubmit}
         >
           <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-            Sửa dự án
+            Tạo yêu cầu triển khai mới
           </h2>
           <div className="mb-4 flex gap-[40px] items-center">
             <label
@@ -158,13 +121,6 @@ export const FormEditProject = ({
               name="projectName"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black "
               placeholder="Nhập tên dự án"
-              defaultValue={project ? project.projectName : ""}
-              required
-              onChange={(e) =>
-                setProject((prev) =>
-                  prev ? { ...prev, projectName: e.target.value } : null
-                )
-              }
             />
           </div>
 
@@ -179,12 +135,7 @@ export const FormEditProject = ({
               id="projectType"
               name="projectType"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black"
-              defaultValue={project ? project.projectType : ""}
-              onChange={(e) =>
-                setProject((prev) =>
-                  prev ? { ...prev, projectType: e.target.value } : null
-                )
-              }
+              defaultValue=""
             >
               <option value="" disabled>
                 Chọn loại dự án
@@ -207,12 +158,7 @@ export const FormEditProject = ({
               id="projectLevel"
               name="projectLevel"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black"
-              defaultValue={project ? project.projectLevel : ""}
-              onChange={(e) =>
-                setProject((prev) =>
-                  prev ? { ...prev, projectLevel: e.target.value } : null
-                )
-              }
+              defaultValue=""
             >
               <option value="" disabled>
                 Chọn cấp độ dự án
@@ -237,13 +183,6 @@ export const FormEditProject = ({
               name="projectDeadline"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black"
               placeholder="Nhập thời hạn dự án"
-              defaultValue={project ? project.projectDeadline : ""}
-              required
-              onChange={(e) =>
-                setProject((prev) =>
-                  prev ? { ...prev, projectDeadline: e.target.value } : null
-                )
-              }
             />
           </div>
 
@@ -260,13 +199,6 @@ export const FormEditProject = ({
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black"
               placeholder="Nhập mô tả dự án"
               rows={4}
-              defaultValue={project ? project.projectDescription : ""}
-              required
-              onChange={(e) =>
-                setProject((prev) =>
-                  prev ? { ...prev, projectDescription: e.target.value } : null
-                )
-              }
             ></textarea>
           </div>
 
@@ -283,15 +215,6 @@ export const FormEditProject = ({
               name="projectFile"
               className="flex-1 px-3 py-2 border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#ccc] text-black "
               placeholder="Thêm tên tệp đính kèm"
-              accept=".pdf,.doc,.docx,.txt,.jpg,.png"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setProject((prev) =>
-                    prev ? { ...prev, projectFile: file } : null
-                  );
-                }
-              }}
             />
           </div>
 
@@ -326,18 +249,20 @@ export const FormEditProject = ({
                       <th>Thời hạn</th>
                       <th>Nội dung yêu cầu</th>
                       <th>Trạng thái</th>
-                      <th>Hành động</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-300 text-gray-700">
                     {tasks.map((task, index) => (
-                      <TaskItem
+                      <tr
                         key={index}
-                        task={task}
-                        index={index}
-                        projectId={projectId}
-                        onTaskDeleted={reloadTasks}
-                      />
+                        className="hover:bg-gray-100 transition-colors duration-200 border-b border-gray-300"
+                      >
+                        <td>{index + 1}</td>
+                        <td>{task.description}</td>
+                        <td>{task.deadline}</td>
+                        <td>{task.content}</td>
+                        <td>Chưa hoàn thành</td>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
@@ -357,7 +282,7 @@ export const FormEditProject = ({
               type="submit"
               className="py-[14px] px-[20px] bg-[#424242] text-white text-[16px] rounded-lg shadow-md hover:bg-[#1a1a1a] transition-colors duration-300 cursor-pointer transform hover:scale-105 active:scale-95 ease-in-out"
             >
-              Sửa dự án
+              Tạo dự án
             </button>
           </div>
         </form>

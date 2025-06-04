@@ -1,5 +1,5 @@
 
-import { ProjectManagementAdmin } from "@/app/components/Project-management/ProjectManagementAdmin";
+import { ProjectManagementAdmin } from "@/app/components/Project-management/admin/ProjectManagementAdmin";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
