@@ -26,7 +26,7 @@ export default async function ProjectPageAdmin({
 }: {
   params: { projectId: string };
 }) {
-  const { projectId } = await params;
+  const { projectId } = params;
   return (
     <>
       <ViewDetailProject projectId={projectId} />
