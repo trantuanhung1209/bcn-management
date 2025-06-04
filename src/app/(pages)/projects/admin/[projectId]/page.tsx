@@ -1,32 +1,16 @@
+"use client";
 import React from "react";
 import { ViewDetailProject } from "@/app/components/Project-management/admin/ViewDetailProject";
-import { Metadata } from "next";
+import { useParams } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Chi tiết dự án",
-  keywords: [
-    "Ban Công Nghệ",
-    "Home",
-    "BCN",
-    "Project Management",
-    "User Dashboard",
-    "Member Dashboard",
-  ],
-  authors: [
-    {
-      name: "Ban Công Nghệ",
-    },
-  ],
-  description:
-    "Dashboard for members of Ban Công Nghệ project management system",
-};
+export default function ProjectPageAdmin() {
+  const params = useParams();
+  const projectId = params?.projectId as string | undefined;
 
-export default async function ProjectPageAdmin({
-  params,
-}: {
-  params: { projectId: string };
-}) {
-  const { projectId } = params;
+  if (!projectId) {
+    return <div>Không tìm thấy mã dự án!</div>;
+  }
+
   return (
     <>
       <ViewDetailProject projectId={projectId} />

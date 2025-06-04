@@ -71,6 +71,14 @@ export const ViewDetailProject = (props: ViewDetailProjectProps) => {
     return <div>Không tìm thấy mã dự án!</div>;
   }
 
+  const fetchTasks = async () => {
+    setLoading(true);
+    const res = await fetch(`/api/projects/${projectId}`);
+    const data = await res.json();
+    setTasks(data.project.tasks || []);
+    setLoading(false);
+  };
+
   return (
     <>
       <ParticlesBackground />
@@ -150,37 +158,36 @@ export const ViewDetailProject = (props: ViewDetailProjectProps) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-300 text-gray-700">
-                    {loadSkeleton ? (
-                      Array.from({ length: 5 }).map((_, index) => (
-                        <tr key={index} className="animate-pulse">
-                          <td>
-                            <span className="skeleton w-[50px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td>
-                            <span className="skeleton w-[150px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td>
-                            <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td>
-                            <span className="skeleton w-[200px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td>
-                            <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td></td>
-                        </tr>
-                      ))
-                    ) : (
-                      tasks.map((task, index) => (
-                        <TaskItem
-                          key={index}
-                          task={task}
-                          index={index}
-                          projectId={projectId}
-                        />
-                      ))
-                    )}
+                    {loadSkeleton
+                      ? Array.from({ length: 5 }).map((_, index) => (
+                          <tr key={index} className="animate-pulse">
+                            <td>
+                              <span className="skeleton w-[50px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td>
+                              <span className="skeleton w-[150px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td>
+                              <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td>
+                              <span className="skeleton w-[200px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td>
+                              <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td></td>
+                          </tr>
+                        ))
+                      : tasks.map((task, index) => (
+                          <TaskItem
+                            key={index}
+                            task={task}
+                            index={index}
+                            projectId={projectId}
+                            onTaskDeleted={fetchTasks}
+                          />
+                        ))}
                   </tbody>
                 </table>
               </div>
