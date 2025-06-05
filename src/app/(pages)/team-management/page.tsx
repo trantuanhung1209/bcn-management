@@ -1,3 +1,4 @@
+import { TeamManagementMember } from "@/app/components/Team-management/TeamManagementMember";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,8 +21,6 @@ export const metadata: Metadata = {
 
 export default function MemberTeamManagement() {
   return (
-    <div>
-      <h1>Member Management</h1>
-    </div>
+    <TeamManagementMember />
   );
 }

@@ -2,7 +2,7 @@
 
 import Loading from "../../Loading";
 import ParticlesBackground from "../../ParticlesBackground";
-import { Sider } from "../../Sider/Sider";
+import { Sider } from "../../Sider/SiderMember";
 import { useEffect, useState } from "react";
 import { FaArrowLeftLong, FaCloudArrowDown } from "react-icons/fa6";
 import { useRouter } from "next/navigation";

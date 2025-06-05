@@ -1,3 +1,4 @@
+import { CalendarMember } from "@/app/components/Calendar/CalendarMember";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,8 +21,6 @@ export const metadata: Metadata = {
 
 export default function MemberCalendar() {
   return (
-    <div>
-      <h1>Member Calendar</h1>
-    </div>
+    <CalendarMember />
   );
 }

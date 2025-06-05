@@ -1,3 +1,4 @@
+import { ProfileMember } from "@/app/components/Profile/ProfileMember";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,8 +21,6 @@ export const metadata: Metadata = {
 
 export default function MemberProfile() {
   return (
-    <div>
-      <h1>Member Profile</h1>
-    </div>
+    <ProfileMember />
   );
 }
