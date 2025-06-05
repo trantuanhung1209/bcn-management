@@ -4,11 +4,21 @@ import { useEffect, useState } from "react";
 import Loading from "../Loading";
 import ParticlesBackground from "../ParticlesBackground";
 import { Sider } from "../Sider/SiderMember";
+import { useRouter } from "next/navigation";
 
 
 export const HomeMember = () => {
 
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // Kiểm tra đăng nhập
+  useEffect(() => {
+    const isLogin = localStorage.getItem("isLogin");
+    if (isLogin !== "true") {
+      router.replace("/login");
+    }
+  }, [router]);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 500);

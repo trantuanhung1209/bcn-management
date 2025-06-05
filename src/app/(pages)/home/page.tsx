@@ -2,7 +2,7 @@ import { HomeMember } from "@/app/components/Home/HomeMember";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
+  title: "Trang Chủ - Ban Công Nghệ",
   keywords: [
     "Ban Công Nghệ",
     "Dashboard",
