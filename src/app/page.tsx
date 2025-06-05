@@ -25,7 +25,7 @@ export default function Home() {
       <div className="container mx-auto">
         <FirstTitle />
 
-        <div className="inner-login flex flex-col items-center justify-center justify-center">
+        <div className="inner-login flex flex-col items-center justify-center">
           <h2 className="text-[24px] text-gray-700 mb-[32px]">Bạn cần đăng nhập để sử dụng</h2>
           <button className="py-[16px] px-[20px] bg-[#424242] text-white text-[16px] rounded-lg shadow-md hover:bg-[#1a1a1a] transition-colors duration-300 cursor-pointer transform hover:scale-105 active:scale-95 ease-in-out"
             onClick={() => {
