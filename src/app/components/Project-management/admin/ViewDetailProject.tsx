@@ -39,6 +39,14 @@ export const ViewDetailProject = (props: ViewDetailProjectProps) => {
   const router = useRouter();
   const [loadSkeleton, setLoadSkeleton] = useState(true);
 
+  // Kiểm tra đăng nhập
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (!user) {
+      router.push("/login");
+    }
+  }, [router]);
+
   useEffect(() => {
     if (projectId) {
       fetch(`/api/projects/${projectId}`)

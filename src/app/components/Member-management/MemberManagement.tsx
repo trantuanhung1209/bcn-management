@@ -24,6 +24,14 @@ export const MemberManagement = () => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  // Kiểm tra đăng nhập
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (!user) {
+      router.push("/login");
+    }
+  }, [router]);
+
   useEffect(() => {
     fetchMembers();
   }, []);

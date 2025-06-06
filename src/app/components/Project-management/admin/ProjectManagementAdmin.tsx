@@ -7,6 +7,8 @@ import { Sider } from "../../Sider/Sider";
 import { FormCreateProject } from "./FormCreateProject";
 import { ViewListTask } from "./ViewListProjects";
 import { FormEditProject } from "./FormEditProject";
+import { useRouter } from "next/navigation";
+
 
 export const ProjectManagementAdmin = () => {
   const [loading, setLoading] = useState(true);
@@ -14,6 +16,15 @@ export const ProjectManagementAdmin = () => {
   const [showTask, setShowTask] = useState(true);
   const [showFormEdit, setShowFormEdit] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const router = useRouter();
+
+  // Kiểm tra đăng nhập
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (!user) {
+      router.push("/login");
+    }
+  }, [router]);
 
   const handleOpenFormCreate = () => {
     setShowFormCreate(true);

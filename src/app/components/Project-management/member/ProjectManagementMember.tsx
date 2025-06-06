@@ -5,9 +5,20 @@ import Loading from "../../Loading";
 import ParticlesBackground from "../../ParticlesBackground";
 import { Sider } from "../../Sider/SiderMember";
 import { ViewListTask } from "./ViewListProjects";
+import { useRouter } from "next/navigation";
 
 export const ProjectManagementMember = () => {
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  // Kiểm tra đăng nhập
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (!user) {
+      router.push("/login");
+    }
+  }, [router]);
+
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 500);
     return () => clearTimeout(timer);
