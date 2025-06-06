@@ -107,7 +107,7 @@ export const MemberManagement = () => {
             </button>
           </div>
           <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">
-            Danh sách thành viên chờ phê duyệt
+            Danh sách thành viên
           </h1>
           <div className="inner-list">
             <table className="min-w-full border border-gray-300 text-gray-600 text-center">
