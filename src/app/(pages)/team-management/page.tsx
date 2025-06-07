@@ -2,7 +2,7 @@ import { TeamManagementMember } from "@/app/components/Team-management/TeamManag
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Quản lý thành viên",
+  title: "Quản lý nhóm",
   keywords: [
     "Ban Công Nghệ",
     "Dashboard",

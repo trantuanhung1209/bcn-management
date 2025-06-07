@@ -6,9 +6,7 @@ import ParticlesBackground from "../ParticlesBackground";
 import { Sider } from "../Sider/Sider";
 import { useRouter } from "next/navigation";
 
-
 export const TeamManagementAdmin = () => {
-
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -35,7 +33,10 @@ export const TeamManagementAdmin = () => {
       <div className="ml-[240px]">
         <Sider />
         <div className="inner-content flex-1 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Admin Actions Team Management</h2>
+          <div className="inner-line py-[30px] border-b border-gray-400"></div>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+            Admin Actions Team Management
+          </h2>
         </div>
       </div>
     </>
