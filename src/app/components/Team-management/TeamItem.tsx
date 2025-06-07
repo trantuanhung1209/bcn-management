@@ -21,16 +21,16 @@ export const TeamItem = ({ team }: { team: Team }) => {
       <h2 className="px-[16px] py-[8px] rounded-[8px] shadow-md bg-white mb-[16px] text-black border border-gray-300 text-start cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:border-gray-500 trainsition-border">
         <p className="inner-name text-[20px] font-bold">{team.teamName}</p>
         <p className="inner-quantity">
-          <strong>Số lượng thành viên:</strong> {team.memberQuantity}
+          <strong className="text-gray-500">Số lượng thành viên:</strong> {team.memberQuantity}
         </p>
         <p className="inner-date">
-          <strong>Ngày tạo:</strong>{" "}
+          <strong className="text-gray-500">Ngày tạo:</strong>{" "}
           {team.createdAt ? new Date(team.createdAt).toLocaleDateString() : ""}
         </p>
         <p className="inner-project">
           {team.projectName ? (
             <>
-              <strong>Dự án đang triển khai:</strong> {team.projectName}
+              <strong className="text-gray-500">Dự án đang triển khai:</strong> {team.projectName}
             </>
           ) : (
             <strong>Chưa có dự án nào</strong>
@@ -39,7 +39,7 @@ export const TeamItem = ({ team }: { team: Team }) => {
         <p className="inner-deadline">
           {team.projectName ? (
             <>
-              <strong>Ngày hết hạn dự án:</strong>{" "}
+              <strong className="text-gray-500">Ngày hết hạn dự án:</strong>{" "}
               {team.deadline
                 ? new Date(team.deadline).toLocaleDateString()
                 : "Chưa có ngày hết hạn"}
