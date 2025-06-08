@@ -9,9 +9,20 @@ export default async function handler(
   const db = client.db("bcn_management");
 
   if (req.method === "GET") {
-    // Lấy danh sách nhóm
-    const teams = await db.collection("teams").find({}).toArray();
-    res.status(200).json({ success: true, teams });
+    const { userId } = req.query;
+
+    let teams;
+    if (userId && typeof userId === "string") {
+      // Lấy các team mà user là thành viên
+      teams = await db.collection("teams").find({
+        members: { $elemMatch: { memberId: userId } }
+      }).toArray();
+    } else {
+      // Lấy tất cả team
+      teams = await db.collection("teams").find({}).toArray();
+    }
+
+    return res.status(200).json({ teams });
   } else if (req.method === "POST") {
     // Tạo mới nhóm, kiểm tra tên nhóm đã tồn tại chưa
     const team = req.body;

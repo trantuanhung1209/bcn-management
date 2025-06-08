@@ -21,15 +21,25 @@ export default async function handler(
       res.status(404).json({ success: false, message: "Project not found" });
     }
   } else if (req.method === "PUT") {
-    // Cập nhật project
     const updateData = req.body;
-    // Xoá trường _id nếu có
     if ("_id" in updateData) {
       delete updateData._id;
     }
+    // Chỉ lấy các trường hợp lệ
+    const allowedFields = [
+      "projectStatus",
+      "teamId",
+      "projectName",
+      "deadline",
+      "description",
+    ];
+    const filteredUpdate: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (key in updateData) filteredUpdate[key] = updateData[key];
+    }
     const result = await db
       .collection("projects")
-      .updateOne({ projectId: projectId as string }, { $set: updateData });
+      .updateOne({ projectId: projectId as string }, { $set: filteredUpdate });
     if (result.modifiedCount > 0) {
       res.status(200).json({ success: true });
     } else {

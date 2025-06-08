@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { FaArrowLeftLong, FaCloudArrowDown } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 import { TaskItem } from "./TaskItem";
+import { TakeProject } from "./TakeProject";
 
 interface ViewDetailProjectProps {
   projectId: string;
@@ -29,6 +30,16 @@ interface Project {
   fileUrl: string;
   tasks: Task[];
   projectStatus: string;
+  teamId: string;
+}
+
+interface Team {
+  teamId: string;
+  teamName: string;
+  memberQuantity: number;
+  createdAt: string;
+  projectId?: string;
+  deadline?: string;
 }
 
 export const ViewDetailProject = (props: ViewDetailProjectProps) => {
@@ -38,6 +49,7 @@ export const ViewDetailProject = (props: ViewDetailProjectProps) => {
   const [project, setProject] = useState<Project | null>(null);
   const router = useRouter();
   const [loadSkeleton, setLoadSkeleton] = useState(true);
+  const [team, setTeam] = useState<Team | null>(null);
 
   // Kiểm tra đăng nhập
   useEffect(() => {
@@ -46,6 +58,14 @@ export const ViewDetailProject = (props: ViewDetailProjectProps) => {
       router.push("/login");
     }
   }, [router]);
+
+  useEffect(() => {
+    if (project?.teamId) {
+      fetch(`/api/teams/${project.teamId}`)
+        .then((res) => res.json())
+        .then((data) => setTeam(data.team));
+    }
+  }, [project?.teamId]);
 
   useEffect(() => {
     if (projectId) {
@@ -112,7 +132,25 @@ export const ViewDetailProject = (props: ViewDetailProjectProps) => {
             {loadSkeleton ? (
               <span className="skeleton w-[150px] h-[20px] bg-gray-300 animate-pulse"></span>
             ) : (
-              <span className="text-black">{project?.projectType}</span>
+              <span className="text-black">{team?.teamName}</span>
+            )}
+          </p>
+          <p className="inner-type mb-2 text-gray-500 text-[20px]">
+            <strong>Tình trạng:</strong>{" "}
+            {loadSkeleton ? (
+              <span className="skeleton w-[100px] h-[20px] bg-gray-300 animate-pulse"></span>
+            ) : (
+              <span
+                className={
+                  project?.projectStatus === "Đang triển khai"
+                    ? "text-[#C39500]"
+                    : project?.projectStatus === "Đã hoàn thành"
+                    ? "text-green-600"
+                    : "text-[#E60000 ]"
+                }
+              >
+                {project?.projectStatus}
+              </span>
             )}
           </p>
           <p className="project-file flex items-center gap-[20px] text-gray-500 text-[20px] mb-4">
@@ -157,43 +195,45 @@ export const ViewDetailProject = (props: ViewDetailProjectProps) => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-300 text-gray-700">
-                    {loadSkeleton ? (
-                      Array.from({ length: 5 }).map((_, index) => (
-                        <tr key={index} className="animate-pulse">
-                          <td>
-                            <span className="skeleton w-[50px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td>
-                            <span className="skeleton w-[150px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td>
-                            <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td>
-                            <span className="skeleton w-[200px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td>
-                            <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
-                          </td>
-                          <td></td>
-                        </tr>
-                      ))
-                    ) : (
-                      tasks.map((task, index) => (
-                        <TaskItem
-                          key={index}
-                          task={task}
-                          index={index}
-                          projectId={projectId}
-                        />
-                      ))
-                    )}
+                    {loadSkeleton
+                      ? Array.from({ length: 5 }).map((_, index) => (
+                          <tr key={index} className="animate-pulse">
+                            <td>
+                              <span className="skeleton w-[50px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td>
+                              <span className="skeleton w-[150px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td>
+                              <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td>
+                              <span className="skeleton w-[200px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td>
+                              <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
+                            </td>
+                            <td></td>
+                          </tr>
+                        ))
+                      : tasks.map((task, index) => (
+                          <TaskItem
+                            key={index}
+                            task={task}
+                            index={index}
+                            projectId={projectId}
+                          />
+                        ))}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
         </div>
+        <TakeProject
+          projectId={projectId}
+          checkTeamId={project?.teamId || ""}
+        />
       </div>
     </>
   );

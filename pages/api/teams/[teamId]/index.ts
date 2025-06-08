@@ -18,9 +18,24 @@ export default async function handler(
     if (!team) return res.status(404).json({ message: "Không tìm thấy team" });
     return res.status(200).json({ team });
   } else if (req.method === "PUT") {
-    // Cập nhật thông tin team
+    // Chỉ cập nhật các trường hợp lệ
+    const allowedFields = [
+      "teamName",
+      "memberQuantity",
+      "members",
+      "projectId", // thêm projectId vào đây
+      "deadline",
+      "userId"
+    ];
     const updateFields = req.body;
-    const result = await db.collection("teams").updateOne({ teamId }, { $set: updateFields });
+    const filteredUpdate: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (key in updateFields) filteredUpdate[key] = updateFields[key];
+    }
+    const result = await db.collection("teams").updateOne(
+      { teamId },
+      { $set: filteredUpdate }
+    );
     if (result.matchedCount === 0) {
       return res.status(404).json({ success: false, message: "Không tìm thấy team để cập nhật" });
     }

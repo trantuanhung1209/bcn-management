@@ -4,7 +4,7 @@ import { Sider } from "../Sider/SiderMember";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Loading from "../Loading";
-import { TaskItem } from "../Project-management/member/TaskItem";
+import { MemberItem } from "./MemberItem";
 
 interface Task {
   id?: string;
@@ -26,20 +26,30 @@ interface Project {
   projectId: string;
 }
 
+interface Member {
+  memberId: string;
+  memberName: string;
+  email: string;
+  role: string;
+}
+
 interface Team {
   teamId: string;
   teamName: string;
   memberQuantity: number;
-  projectId?: string; // Thêm trường projectId để lấy thông tin dự án
+  projectId?: string;
+  createdAt: string;
+  members: Member[];
+  userId: string;
 }
 
 export const TeamDetail = (props: { teamId: string }) => {
   const { teamId } = props;
   const [loading, setLoading] = useState(true);
   const [loadSkeleton, setLoadSkeleton] = useState(true);
-  const [team, setTeam] = useState<Team | null>(null); // Thêm state cho team
+  const [team, setTeam] = useState<Team | null>(null);
   const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -54,31 +64,29 @@ export const TeamDetail = (props: { teamId: string }) => {
     }
   }, [router]);
 
-  // Lấy team và project theo teamId
   useEffect(() => {
     const fetchProject = async () => {
       setLoadSkeleton(true);
       try {
-        // Gọi API lấy team để lấy projectId và thông tin nhóm
         const teamRes = await fetch(`/api/teams/${teamId}`);
         const teamData = await teamRes.json();
-        setTeam(teamData.team); // Lưu thông tin nhóm
+        setTeam(teamData.team);
+        setMembers(teamData.team.members || []);
+        console.log("Team Data:", teamData);
+        console.log("Members:", teamData.members);
         const projectId = teamData.team?.projectId;
         if (projectId) {
-          // Gọi API lấy project theo projectId
           const projectRes = await fetch(`/api/projects/${projectId}`);
           const projectData = await projectRes.json();
           setProject(projectData.project);
-          setTasks(projectData.project?.tasks || []);
         } else {
           setProject(null);
-          setTasks([]);
         }
       } catch (error) {
         console.error("Error fetching project:", error);
         setProject(null);
-        setTasks([]);
         setTeam(null);
+        setMembers([]);
       }
       setLoadSkeleton(false);
     };
@@ -92,6 +100,10 @@ export const TeamDetail = (props: { teamId: string }) => {
   const handleComeback = () => {
     router.push("/team-management");
   };
+
+  const user = localStorage.getItem("user");
+  const userData = user ? JSON.parse(user) : null;
+  const userId = userData?.userId;
 
   return (
     <>
@@ -113,20 +125,22 @@ export const TeamDetail = (props: { teamId: string }) => {
         </div>
 
         <div className="inner-project-detail p-[20px] text-black">
-          {/* Hiển thị thông tin nhóm */}
           <h2 className="text-2xl font-bold mb-2">
-            {loadSkeleton ? (
-              <span className="skeleton w-[200px] h-[32px] bg-gray-300 animate-pulse"></span>
-            ) : (
-              <>Tên nhóm: <span className="text-black">{team?.teamName}</span></>
-            )}
-          </h2>
-          <p className="mb-2 text-gray-500 text-[20px]">
-            <strong>Số lượng thành viên:</strong>{" "}
+            <strong>Tên nhóm:</strong>{" "}
             {loadSkeleton ? (
               <span className="skeleton w-[50px] h-[20px] bg-gray-300 animate-pulse"></span>
             ) : (
-              <span className="text-black">{team?.memberQuantity}</span>
+              <span className="text-black">{team?.teamName || ""}</span>
+            )}
+          </h2>
+          <p className="mb-2 text-gray-500 text-[20px]">
+            <strong>Số lượng tối đa:</strong>{" "}
+            {loadSkeleton ? (
+              <span className="skeleton w-[50px] h-[20px] bg-gray-300 animate-pulse"></span>
+            ) : (
+              <span className="text-black">
+                {team?.memberQuantity ?? ""} thành viên
+              </span>
             )}
           </p>
           <p className="inner-team mb-2 text-gray-500 text-[20px]">
@@ -134,7 +148,7 @@ export const TeamDetail = (props: { teamId: string }) => {
             {loadSkeleton ? (
               <span className="skeleton w-[150px] h-[20px] bg-gray-300 animate-pulse"></span>
             ) : (
-              <span className="text-black">{project?.projectName}</span>
+              <span className="text-black">{project?.projectName || ""}</span>
             )}
           </p>
           <p className="project-file flex items-center gap-[20px] text-gray-500 text-[20px] mb-4">
@@ -161,21 +175,23 @@ export const TeamDetail = (props: { teamId: string }) => {
             )}
           </p>
           <p className="project-list text-gray-500 text-[20px] mb-4">
-            <strong>Danh sách nhiệm vụ:</strong>{" "}
-            <span className="text-black">{tasks.length} nhiệm vụ</span>
+            <strong>Danh sách thành viên đang hoạt động:</strong>{" "}
+            <span className="text-black">
+              {members.length} thành viên
+            </span>
           </p>
 
           <div className="task-list mb-4">
             <div className="overflow-x-auto">
               <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
                 <table className="table text-black border border-gray-300 w-full">
-                  <thead className="bg-gray-200 text-black">
+                  <thead className="bg-gray-200 text-black text-center">
                     <tr>
                       <th>ID</th>
-                      <th>Mô tả </th>
-                      <th>Thời hạn</th>
-                      <th>Nội dung yêu cầu</th>
-                      <th>Trạng thái</th>
+                      <th>Họ và tên</th>
+                      <th>Email</th>
+                      <th>Vai trò</th>
+                      <th>Hành động</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-300 text-gray-700">
@@ -194,20 +210,29 @@ export const TeamDetail = (props: { teamId: string }) => {
                             <td>
                               <span className="skeleton w-[200px] h-[20px] bg-gray-300"></span>
                             </td>
-                            <td>
-                              <span className="skeleton w-[100px] h-[20px] bg-gray-300"></span>
-                            </td>
-                            <td></td>
                           </tr>
                         ))
-                      : tasks.map((task, index) => (
-                          <TaskItem
-                            key={index}
-                            task={task}
-                            index={index}
-                            projectId={project?.projectId || ""}
-                          />
-                        ))}
+                      : members.length > 0 ? (
+                          members.map((member, index) => (
+                            <MemberItem
+                              key={index}
+                              member={member}
+                              teamId={teamId}
+                              onDeleted={() => {
+                                setMembers((prevMembers) =>
+                                  prevMembers.filter((m) => m.memberId !== member.memberId)
+                                );
+                              }}
+                              isOwner={userId === team?.userId}
+                            />
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} className="text-center text-gray-500">
+                              Không có thành viên nào trong nhóm.
+                            </td>
+                          </tr>
+                        )}
                   </tbody>
                 </table>
               </div>

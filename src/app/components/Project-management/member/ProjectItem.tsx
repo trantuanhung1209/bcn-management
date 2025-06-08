@@ -1,4 +1,3 @@
-
 interface Task {
   id: string;
   description: string;
@@ -45,7 +44,17 @@ export const ProjectItem = (props: {
         </p>
         <p className="text-[16px] mb-[8px] text-[#A1A1A1]">
           Tình trạng:{" "}
-          <span className={`text-[#FF0000]`}>{project.projectStatus}</span>
+          <span
+            className={
+              project.projectStatus === "Đang triển khai"
+                ? "text-[#C39500]"
+                : project.projectStatus === "Đã hoàn thành"
+                ? "text-green-600"
+                : "text-[#E60000 ]"
+            }
+          >
+            {project.projectStatus}
+          </span>
         </p>
       </div>
     </>

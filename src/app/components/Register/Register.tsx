@@ -93,7 +93,7 @@ export const Register = () => {
       password,
       status: "pending",
       role: "member",
-      userId: new Date().toISOString(),
+      userId: new Date().toISOString().replace(/[-:.]/g, ""),
       createdAt: new Date().toISOString(),
       isActive: "offline",
     };

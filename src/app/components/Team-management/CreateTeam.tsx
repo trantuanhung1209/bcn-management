@@ -62,13 +62,29 @@ export const CreateTeam = ({ onSuccess }: { onSuccess?: () => void }) => {
       console.error("Error checking team name:", error);
     }
 
+    const user = localStorage.getItem("user");
+    if (!user) {
+      Swal.fire("Lỗi!", "Bạn cần đăng nhập để tạo nhóm.", "error");
+      return;
+    }
+    const userData = JSON.parse(user);
+    const userId = userData.userId;
+
     const newTeam = {
       teamName,
       memberQuantity: parseInt(memberQuantity, 10),
-      memberIds: [],
+      members: [
+        {
+          memberId: userId.toString(),
+          memberName: userData.fullName,
+          email: userData.email,
+          role: "leader",
+        },
+      ],
       teamId: Date.now().toString(),
       createdAt: new Date().toISOString(),
       projectId: "",
+      userId: userId.toString(),
     };
 
     fetch("/api/teams", {

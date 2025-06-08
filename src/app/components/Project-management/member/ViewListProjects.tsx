@@ -124,6 +124,7 @@ export const ViewListTask = ({
                   key={project.projectId}
                   project={project}
                   handleViewDetail={handleViewDetail}
+                  
                 />
               ))}
         </div>
