@@ -5,6 +5,7 @@ import { Sider } from "../Sider/SiderMember";
 import { ViewListTeam } from "./ViewListTeam";
 import { useRouter } from "next/navigation";
 import Loading from "../Loading";
+import { Notification } from "./Notification";
 
 export const TeamManagementMember = () => {
   const [loading, setLoading] = useState(true);
@@ -23,6 +24,13 @@ export const TeamManagementMember = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  const handleReload = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+    }, 500);
+  };
+
   if (loading) {
     return <Loading />;
   }
@@ -33,7 +41,9 @@ export const TeamManagementMember = () => {
       <div className="ml-[240px]">
         <Sider />
         <div className="inner-content flex-1 rounded-lg shadow-md">
-          <div className="inner-line py-[30px] border-b border-gray-400"></div>
+          <div className="inner-line py-[30px] border-b border-gray-400 flex justify-end items-center pr-[20px]">
+            <Notification onJoined={handleReload} />
+          </div>
           <ViewListTeam />
         </div>
       </div>

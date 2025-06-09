@@ -65,6 +65,7 @@ export const ViewListTeam = () => {
     fetchData();
   };
 
+
   const user = localStorage.getItem("user");
   const userData = user ? JSON.parse(user) : null;
   const userId = userData?.userId;
@@ -72,7 +73,7 @@ export const ViewListTeam = () => {
   return (
     <>
       <div className="inner-content p-[20px]">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
+        <h2 className="text-4xl font-semibold text-gray-800 mb-4 text-center">
           Danh sách nhóm của bạn
         </h2>
         <div className="inner-wrap grid grid-cols-4 gap-[16px] p-[32px]">

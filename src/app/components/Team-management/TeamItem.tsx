@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FaPen, FaRegTrashCan } from "react-icons/fa6";
 import Swal from "sweetalert2";
+import { InviteMember } from "./InviteMember";
 
 interface Team {
   teamId: string;
@@ -26,6 +27,13 @@ interface Project {
   task: Task[];
 }
 
+interface User {
+  userId: string;
+  fullName: string;
+  userName: string;
+  email: string;
+}
+
 export const TeamItem = ({
   team,
   onDeleted,
@@ -43,6 +51,16 @@ export const TeamItem = ({
   const [checkName, setCheckName] = useState(false);
   const [checkQuantity, setCheckQuantity] = useState(false);
   const [project, setProject] = useState<Project | null>(null);
+  const [suggestedUsers, setSuggestedUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [invitedUsers, setInvitedUsers] = useState<{
+    [userId: string]: boolean;
+  }>({});
+
+  const userLogin = localStorage.getItem("user");
+  const user = userLogin ? JSON.parse(userLogin) : null;
+  const inviterId = user ? user.userId : "";
+  const inviterName = user ? user.fullName : "";
 
   useEffect(() => {
     if (team.projectId) {
@@ -52,12 +70,80 @@ export const TeamItem = ({
     }
   }, [team.projectId]);
 
+  useEffect(() => {
+    fetch("/api/users?role=member")
+      .then((res) => res.json())
+      .then((data) => {
+        setAllUsers(
+          (data.users || []).filter((user: User) => user.userId !== inviterId)
+        );
+      });
+  }, [inviterId]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value.toLowerCase();
+    const filteredUsers = allUsers.filter((user) =>
+      user.fullName.toLowerCase().includes(query)
+    );
+    setSuggestedUsers(filteredUsers);
+  };
+
+  const invite = async (
+    user: User,
+    teamId: string,
+    inviterId: string,
+    inviterName: string
+  ) => {
+    try {
+      // Gửi lời mời lên server
+      const res = await fetch("/api/invitations/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          invitationId: new Date().getTime().toString(),
+          teamId: teamId,
+          teamName: team.teamName,
+          inviterId: inviterId,
+          inviterName: inviterName,
+          inviteeId: user.userId,
+          inviteeName: user.fullName,
+          inviteeEmail: user.email,
+          status: "pending",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Gửi lời mời thất bại");
+      }
+
+      setInvitedUsers((prev) => ({ ...prev, [user.userId]: true }));
+      setTimeout(() => {
+        setInvitedUsers((prev) => {
+          const newState = { ...prev };
+          delete newState[user.userId];
+          return newState;
+        });
+      }, 10000);
+
+      const modal = document.getElementById(
+        team.teamId
+      ) as HTMLDialogElement | null;
+      if (modal) modal.close();
+      Swal.fire("Thành công!", "Mời thành viên thành công!", "success");
+    } catch (error) {
+      Swal.fire("Lỗi!", "Không thể gửi lời mời. Vui lòng thử lại.", "error");
+      console.error(error);
+    }
+  };
+
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setEditName(team.teamName);
     setEditQuantity(String(team.memberQuantity));
     const modal = document.getElementById(
-      "my_modal_2"
+      "editTeamForm" + team.teamId
     ) as HTMLDialogElement | null;
     if (modal) modal.showModal();
   };
@@ -106,6 +192,25 @@ export const TeamItem = ({
       setCheckQuantity(true);
       valid = false;
     }
+
+    // Kiểm tra tên nhóm đã tồn tại (trừ nhóm hiện tại)
+    const res = await fetch("/api/teams");
+    const data = await res.json();
+    const existed = data.teams.some(
+      (t: any) =>
+        t.teamName.trim().toLowerCase() === editName.trim().toLowerCase() &&
+        t.teamId !== team.teamId
+    );
+    if (existed) {
+      setCheckName(true);
+      Swal.fire(
+        "Lỗi!",
+        "Tên nhóm đã tồn tại, vui lòng chọn tên khác.",
+        "error"
+      );
+      return;
+    }
+
     if (!valid) return;
 
     try {
@@ -140,8 +245,11 @@ export const TeamItem = ({
         }}
         className="inner-item"
       >
-        <div className="px-[16px] py-[8px] rounded-[8px] shadow-md bg-white mb-[16px] text-black border border-gray-300 text-start cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:border-gray-500 trainsition-border">
-          <p className="inner-name text-[20px] font-bold text-center mb-3">{team.teamName}</p>
+        <div className="px-[16px] py-[8px] rounded-[8px] shadow-md bg-white mb-[16px] text-black border border-gray-300 text-start cursor-pointer hover:shadow-lg transition-shadow duration-300 hover:border-gray-500 trainsition-border relative">
+          <InviteMember teamId={team.teamId} />
+          <p className="inner-name text-[20px] font-bold text-center mb-3">
+            {team.teamName}
+          </p>
           <p className="inner-quantity">
             <strong className="text-gray-500">Số lượng tối đa:</strong>{" "}
             {team.memberQuantity}
@@ -205,7 +313,7 @@ export const TeamItem = ({
         </div>
       </div>
 
-      <dialog id="my_modal_2" className="modal">
+      <dialog id={"editTeamForm" + team.teamId} className="modal">
         <div className="modal-box bg-white text-black">
           <div className="modal-heading">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">
@@ -215,7 +323,7 @@ export const TeamItem = ({
               className="btn btn-sm btn-circle absolute right-2 top-2"
               onClick={() => {
                 const modal = document.getElementById(
-                  "my_modal_2"
+                  "editTeamForm" + team.teamId
                 ) as HTMLDialogElement | null;
                 if (modal) modal.close();
               }}
@@ -226,7 +334,7 @@ export const TeamItem = ({
 
           <div className="modal-action block">
             <form
-              id="editTeamForm"
+              id={"editTeamForm" + team.teamId}
               onSubmit={handleSubmit}
               className="inner-form px-[32px] py-[16px]"
             >
@@ -285,6 +393,95 @@ export const TeamItem = ({
                 >
                   Lưu thay đổi
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </dialog>
+
+      <dialog id={team.teamId} className="modal">
+        <div className="modal-box bg-white text-black">
+          <div className="modal-heading">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              Mời thành viên vào nhóm
+            </h2>
+            <button
+              className="btn btn-sm btn-circle absolute right-2 top-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                const modal = document.getElementById(
+                  team.teamId
+                ) as HTMLDialogElement | null;
+                if (modal) modal.close();
+              }}
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="modal-action block">
+            <form id="editTeamForm" className="inner-form px-[32px] py-[16px]">
+              <input
+                type="text"
+                placeholder="Tìm kiếm thành viên..."
+                onChange={handleChange}
+                className="mb-4 px-3 py-2 border border-black rounded-lg w-full"
+              />
+              <div className="overflow-x-auto">
+                <table className="table-auto w-full border border-gray-300 text-left">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-4 py-2 border-b">Họ tên</th>
+                      <th className="px-4 py-2 border-b">Tên đăng nhập</th>
+                      <th className="px-4 py-2 border-b">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {suggestedUsers.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={3}
+                          className="text-center py-4 text-gray-400"
+                        >
+                          Không tìm thấy thành viên nào
+                        </td>
+                      </tr>
+                    ) : (
+                      suggestedUsers.map((user, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50">
+                          <td className="px-4 py-2 border-b">
+                            {user.fullName}
+                          </td>
+                          <td className="px-4 py-2 border-b">
+                            {user.userName}
+                          </td>
+                          <td className="px-4 py-2 border-b">
+                            {invitedUsers[user.userId] ? (
+                              <span className="text-green-600 font-semibold">
+                                Đã mời
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="py-[10px] px-[20px] bg-[#424242] text-white text-[16px] rounded-lg shadow-md hover:bg-[#1a1a1a] transition-colors duration-300 cursor-pointer transform hover:scale-105 active:scale-95 ease-in-out"
+                                onClick={() =>
+                                  invite(
+                                    user,
+                                    team.teamId,
+                                    inviterId,
+                                    inviterName
+                                  )
+                                }
+                              >
+                                Mời
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </form>
           </div>
