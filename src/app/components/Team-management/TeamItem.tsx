@@ -96,10 +96,11 @@ export const TeamItem = ({
   ) => {
     try {
       // Gửi lời mời lên server
-      const res = await fetch("/api/invitations/notifications", {
+      const res = await fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          notificationId: new Date().getTime().toString(),
           invitationId: new Date().getTime().toString(),
           teamId: teamId,
           teamName: team.teamName,
@@ -111,8 +112,19 @@ export const TeamItem = ({
           status: "pending",
           createdAt: new Date(),
           updatedAt: new Date(),
+          type: "team-invitation",
+          message: `đã mời bạn tham gia nhóm`,
         }),
       });
+
+      if (res.status === 409) {
+      Swal.fire("Thông báo", "Đã gửi lời mời và đang chờ xác nhận.", "info");
+      const modal = document.getElementById(
+        team.teamId
+      ) as HTMLDialogElement | null;
+      if (modal) modal.close();
+      return;
+    }
 
       if (!res.ok) {
         throw new Error("Gửi lời mời thất bại");
@@ -134,6 +146,10 @@ export const TeamItem = ({
       Swal.fire("Thành công!", "Mời thành viên thành công!", "success");
     } catch (error) {
       Swal.fire("Lỗi!", "Không thể gửi lời mời. Vui lòng thử lại.", "error");
+      const modal = document.getElementById(
+        team.teamId
+      ) as HTMLDialogElement | null;
+      if (modal) modal.close();
       console.error(error);
     }
   };
@@ -208,6 +224,11 @@ export const TeamItem = ({
         "Tên nhóm đã tồn tại, vui lòng chọn tên khác.",
         "error"
       );
+      const modal = document.getElementById(
+        "editTeamForm" + team.teamId
+      ) as HTMLDialogElement | null;
+      if (modal) modal.close();
+      valid = false;
       return;
     }
 
@@ -251,9 +272,13 @@ export const TeamItem = ({
             {team.teamName}
           </p>
           <p className="inner-quantity">
+            <strong className="text-gray-500">ID :</strong>{" "}
+            {team.teamId}
+          </p>
+          <p className="inner-quantity">
             <strong className="text-gray-500">Số lượng tối đa:</strong>{" "}
             {team.memberQuantity}
-          </p>
+          </p> 
           <p className="inner-date">
             <strong className="text-gray-500">Ngày tạo:</strong>{" "}
             {team.createdAt

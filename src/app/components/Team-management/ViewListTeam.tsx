@@ -123,7 +123,7 @@ export const ViewListTeam = () => {
         </div>
 
         <div className="flex justify-end mt-[20px] gap-[30px]">
-          <JoinTeam onSuccess={handleReload} />
+          <JoinTeam />
           <CreateTeam onSuccess={handleReload} />
         </div>
       </div>

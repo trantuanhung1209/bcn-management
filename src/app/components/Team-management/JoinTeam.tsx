@@ -2,8 +2,9 @@ import { useState } from "react";
 import { FaPlus } from "react-icons/fa6";
 import Swal from "sweetalert2";
 
-export const JoinTeam = ({ onSuccess }: { onSuccess?: () => void }) => {
+export const JoinTeam = () => {
   const [checkId, setCheckId] = useState(false);
+
   const handleOpenModal = () => {
     const modal = document.getElementById(
       "my_modal_3"
@@ -35,8 +36,6 @@ export const JoinTeam = ({ onSuccess }: { onSuccess?: () => void }) => {
     const userData = JSON.parse(user);
     const memberId = userData.userId;
     const memberName = userData.fullName || userData.userName || "";
-    const email = userData.email || "";
-    const role = userData.role || "member";
 
     try {
       // Lấy danh sách thành viên hiện tại
@@ -72,7 +71,22 @@ export const JoinTeam = ({ onSuccess }: { onSuccess?: () => void }) => {
       // Lấy thông tin nhóm để kiểm tra memberQuantity
       const teamRes = await fetch(`/api/teams/${teamId}`);
       const teamData = await teamRes.json();
-      const memberQuantity = teamData.team?.memberQuantity || 0;
+      const ownerId = teamData.team.userId;
+      if (!teamData.team) {
+        setCheckId(true);
+        Swal.fire("Lỗi!", "ID nhóm không tồn tại.", "error");
+        const modal = document.getElementById(
+          "my_modal_3"
+        ) as HTMLDialogElement | null;
+        if (modal) {
+          modal.close();
+          form.reset();
+          setCheckId(false);
+        }
+        return;
+      }
+      console.log("teamData.team:", teamData.team);
+      const memberQuantity = teamData.team.memberQuantity || 0;
       if ((data.members?.length || 0) >= memberQuantity) {
         Swal.fire("Lỗi!", "Nhóm đã đủ số lượng thành viên.", "error");
         const modal = document.getElementById(
@@ -84,29 +98,45 @@ export const JoinTeam = ({ onSuccess }: { onSuccess?: () => void }) => {
         return;
       }
 
-      // Gửi yêu cầu thêm thành viên mới
-      const addRes = await fetch(`/api/teams/${teamId}/members`, {
+      // Gửi thông báo yêu cầu xác nhận đến nhóm trưởng
+      const notiRes = await fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          memberId,
-          memberName,
-          email,
-          role,
+          notificationId: new Date().getTime().toString(),
+          type: "join-request",
+          teamId,
+          teamName: teamData.team?.teamName,
+          inviterId: memberId,
+          inviterName: memberName,
+          inviteeId: ownerId,
+          inviteeName: "",
+          inviteeEmail: "",
+          status: "pending",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          message: "đã gửi yêu cầu tham gia nhóm",
         }),
       });
 
-      const addData = await addRes.json();
-      if (addRes.ok && addData.success) {
-        Swal.fire("Thành công!", "Bạn đã tham gia nhóm thành công.", "success");
-        if (onSuccess) onSuccess();
-      } else {
+      if (notiRes.ok) {
         Swal.fire(
-          "Lỗi!",
-          addData.message || "Không thể tham gia nhóm.",
-          "error"
+          "Thành công!",
+          "Đã gửi yêu cầu, chờ nhóm trưởng xác nhận.",
+          "success"
         );
+        const modal = document.getElementById(
+          "my_modal_3"
+        ) as HTMLDialogElement | null;
+        if (modal) modal.close();
+      } else {
+        Swal.fire("Thông báo", "Đã gửi yêu cầu và đang chờ xác nhận.", "info");
+        const modal = document.getElementById(
+          "my_modal_3"
+        ) as HTMLDialogElement | null;
+        if (modal) modal.close();
       }
+
     } catch (error) {
       console.error("Error joining team:", error);
       Swal.fire("Lỗi!", "Có lỗi xảy ra khi tham gia nhóm.", "error");

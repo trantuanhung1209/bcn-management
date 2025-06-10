@@ -72,8 +72,6 @@ export const TeamDetail = (props: { teamId: string }) => {
         const teamData = await teamRes.json();
         setTeam(teamData.team);
         setMembers(teamData.team.members || []);
-        console.log("Team Data:", teamData);
-        console.log("Members:", teamData.members);
         const projectId = teamData.team?.projectId;
         if (projectId) {
           const projectRes = await fetch(`/api/projects/${projectId}`);

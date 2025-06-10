@@ -5,7 +5,7 @@ import { Sider } from "../Sider/SiderMember";
 import { ViewListTeam } from "./ViewListTeam";
 import { useRouter } from "next/navigation";
 import Loading from "../Loading";
-import { Notification } from "./Notification";
+import { Notification } from "../Notification";
 
 export const TeamManagementMember = () => {
   const [loading, setLoading] = useState(true);
