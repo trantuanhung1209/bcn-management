@@ -1,9 +1,7 @@
-
-
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Chi tiết guild wars",
+  title: "Thông báo guild wars",
   keywords: [
     "Ban Công Nghệ",
     "Dashboard",
@@ -21,9 +19,5 @@ export const metadata: Metadata = {
 };
 
 export default function GuildNotificationPage() {
-  return (
-    <>
-        <div>Thông báo guild</div>
-    </>
-  );
+  return <div>Thông báo guild</div>;
 }
