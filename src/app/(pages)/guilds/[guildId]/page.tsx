@@ -1,7 +1,9 @@
+
+import { GuildDetailMember } from "@/app/components/Guilds/member/GuildDetail";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Thông báo guild wars",
+  title: "Chi tiết Guilds",
   keywords: [
     "Ban Công Nghệ",
     "Dashboard",
@@ -18,6 +20,8 @@ export const metadata: Metadata = {
   description: "Dashboard for members of Ban Công Nghệ project management system",
 };
 
-export default function GuildNotificationPage() {
-  return <div>Thông báo guild</div>;
+export default function GuildChatPage() {
+  return (
+    <GuildDetailMember />
+  );
 }

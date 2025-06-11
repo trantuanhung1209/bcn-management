@@ -2,7 +2,7 @@ import { CreateGuild } from "@/app/components/Guilds/Create/CreateGuild";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Tạo guild wars",
+  title: "Guild wars",
   keywords: [
     "Ban Công Nghệ",
     "Dashboard",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: "Dashboard for members of Ban Công Nghệ project management system",
 };
 
-export default function CreateGuildPage() {
+export default function GuildCreatePage() {
   return (
     <CreateGuild />
   );
