@@ -2,6 +2,7 @@ import { FaHouse, FaRegCircleUser, FaCalendarDays, FaRegCalendarDays, FaRightFro
 import { FaTasks } from "react-icons/fa";
 import { MenuItem } from "./MenuItem";
 import Link from "next/link";
+import { LuSwords } from "react-icons/lu";
 
 export const Sider = () => {
 
@@ -25,6 +26,12 @@ export const Sider = () => {
       icon: <FaTasks />,
       title: "Project/Tasks",
       link: "/project-management/admin",
+      isLogin: true
+    },
+    {
+      icon: <LuSwords />,
+      title: "Guild Wars",
+      link: "/guilds/admin",
       isLogin: true
     },
     {

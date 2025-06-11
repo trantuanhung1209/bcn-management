@@ -8,6 +8,7 @@ import { FaArrowLeftLong, FaCloudArrowDown } from "react-icons/fa6";
 import { useRouter } from "next/navigation";
 import { TaskItem } from "./TaskItem";
 import { TakeProject } from "./TakeProject";
+import { Notification } from "../../Notification";
 
 interface ViewDetailProjectProps {
   projectId: string;
@@ -105,7 +106,9 @@ export const ViewDetailProject = (props: ViewDetailProjectProps) => {
       <div className="ml-[240px]">
         <Sider />
         <div className="inner-content rounded-lg shadow-md ">
-          <div className="inner-line py-[30px] border-b border-gray-400"></div>
+          <div className="inner-line py-[30px] border-b border-gray-400 flex justify-end items-center pr-[20px]">
+            <Notification />
+          </div>
         </div>
 
         <div className="inner-comeback p-[20px]">

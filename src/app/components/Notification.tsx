@@ -255,7 +255,7 @@ export const Notification = ({ onJoined }: { onJoined?: () => void }) => {
                     key={index}
                     className="hover:bg-gray-100 transition-colors"
                   >
-                    <td className="px-4 py-[10px] rounded-[12px] max-w-[500px]">
+                    <td className="px-4 py-[10px] rounded-[12px] max-w-[500px] border-b border-gray-300 max-h-[400px] overflow-y-auto">
                       <div className="text-gray-800 w-full mb-[10px]">
                         <strong>{noti.inviterName}</strong> {noti.message}{" "}
                         <strong>{noti.teamName}</strong>
@@ -322,6 +322,11 @@ export const Notification = ({ onJoined }: { onJoined?: () => void }) => {
                   </tr>
                 ))
               )}
+              <tr className="mt-2">
+                <td colSpan={3} className="text-gray-500 text-center py-[10px] text-[12px] hover:text-gray-700 cursor-pointer">
+                  Xem tất cả thông báo
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>

@@ -6,6 +6,7 @@ import ParticlesBackground from "../../ParticlesBackground";
 import { Sider } from "../../Sider/SiderMember";
 import { ViewListTask } from "./ViewListProjects";
 import { useRouter } from "next/navigation";
+import { Notification } from "../../Notification";
 
 export const ProjectManagementMember = () => {
   const [loading, setLoading] = useState(true);
@@ -34,7 +35,9 @@ export const ProjectManagementMember = () => {
       <div className="ml-[240px]">
         <Sider />
         <div className="inner-content rounded-lg shadow-md ">
-          <div className="inner-line py-[30px] border-b border-gray-400"></div>
+          <div className="inner-line py-[30px] border-b border-gray-400 flex justify-end items-center pr-[20px]">
+            <Notification />
+          </div>
           <ViewListTask />
         </div>
       </div>
