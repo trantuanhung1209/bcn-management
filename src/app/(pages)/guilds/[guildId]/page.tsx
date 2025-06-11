@@ -1,5 +1,5 @@
 
-import { GuildDetailMember } from "@/app/components/Guilds/member/GuildDetail";
+
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -22,6 +22,8 @@ export const metadata: Metadata = {
 
 export default function GuildNotificationPage() {
   return (
-    <GuildDetailMember />
+    <>
+        <div>Thông báo guild</div>
+    </>
   );
 }
