@@ -34,6 +34,7 @@ export const GuildDetailMember = () => {
   const [status, setStatus] = useState<"joined" | "pending" | "available">(
     "available"
   );
+  const [userMap, setUserMap] = useState<Record<string, string>>({});
   const router = useRouter();
   const params = useParams();
 
@@ -70,6 +71,26 @@ export const GuildDetailMember = () => {
         setGuild({ ...data.guild, masterName });
       });
   }, [params]);
+
+  useEffect(() => {
+    if (!guild) return;
+    const fetchUsers = async () => {
+      const map: Record<string, string> = {};
+      await Promise.all(
+        guild.members.map(async (memberId) => {
+          try {
+            const res = await fetch(`/api/users/${memberId}`);
+            const data = await res.json();
+            map[memberId] = data.fullName || memberId;
+          } catch {
+            map[memberId] = memberId;
+          }
+        })
+      );
+      setUserMap(map);
+    };
+    fetchUsers();
+  }, [guild]);
 
   useEffect(() => {
     if (guild && user) {
@@ -143,7 +164,7 @@ export const GuildDetailMember = () => {
         {/* Nội dung chính */}
         <div className="max-w-3xl mx-auto bg-[#232946] rounded-xl shadow-lg p-8 mt-8">
           <button
-            className="mb-4 flex items-center gap-2 text-[#ffb800] hover:text-[#ffd700] font-bold"
+            className="mb-4 flex items-center gap-2 text-[#ffb800] hover:text-[#ffd700] font-bold cursor-pointer"
             onClick={() => router.back()}
           >
             <FaArrowLeft /> Quay lại
@@ -197,7 +218,9 @@ export const GuildDetailMember = () => {
                 {(isMaster || isOfficer) && (
                   <button
                     className="bg-green-600 text-white px-4 py-1 rounded font-bold shadow hover:bg-green-800 transition cursor-pointer"
-                    onClick={() => router.push(`/guilds/${guild.guildId}/manage`)}
+                    onClick={() =>
+                      router.push(`/guilds/${guild.guildId}/manage`)
+                    }
                   >
                     Quản lý guild
                   </button>
@@ -215,7 +238,7 @@ export const GuildDetailMember = () => {
                   key={memberId}
                   className="bg-[#181c2b] text-white px-3 py-1 rounded-full text-sm"
                 >
-                  {memberId}
+                  {userMap[memberId] || memberId}
                 </span>
               ))}
             </div>

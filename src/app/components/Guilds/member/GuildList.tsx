@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+import OnlineGiftBox from "./OnlineGiftBox";
+import { FaGift } from "react-icons/fa6";
 
 interface Guild {
   guildId: string;
@@ -29,6 +31,8 @@ export default function GuildList() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const [showQuest, setShowQuest] = useState(false);
+
   // State cho tìm kiếm và lọc
   const [search, setSearch] = useState("");
   const [minMembers, setMinMembers] = useState(0);
@@ -41,26 +45,34 @@ export default function GuildList() {
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) setUser(JSON.parse(userData));
-    fetch("/api/guilds")
-      .then((res) => res.json())
-      .then(async (data) => {
-        const guildsWithMaster = await Promise.all(
-          data.guilds.map(async (g: Guild) => {
-            if (g.masterId) {
-              try {
-                const res = await fetch(`/api/users/${g.masterId}`);
-                const userData = await res.json();
-                return { ...g, masterName: userData.fullName || "Chưa rõ" };
-              } catch {
-                return { ...g, masterName: "Chưa rõ" };
-              }
-            }
+    fetchGuilds();
+  }, []);
+
+  const fetchGuilds = async () => {
+    const res = await fetch("/api/guilds");
+    const data = await res.json();
+    const guildsWithMaster = await Promise.all(
+      data.guilds.map(async (g: Guild) => {
+        if (g.masterId) {
+          try {
+            const res = await fetch(`/api/users/${g.masterId}`);
+            const userData = await res.json();
+            return { ...g, masterName: userData.fullName || "Chưa rõ" };
+          } catch {
             return { ...g, masterName: "Chưa rõ" };
-          })
-        );
-        setGuilds(guildsWithMaster);
-        setLoading(false);
-      });
+          }
+        }
+        return { ...g, masterName: "Chưa rõ" };
+      })
+    );
+    setGuilds(guildsWithMaster);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) setUser(JSON.parse(userData));
+    fetchGuilds();
   }, []);
 
   // Lọc và tìm kiếm
@@ -117,10 +129,16 @@ export default function GuildList() {
     });
     if (res.ok) {
       Swal.fire("Thành công!", "Đã rời guild!", "success");
-      router.refresh?.();
+      fetchGuilds();
     } else {
       Swal.fire("Lỗi", "Rời guild thất bại!", "error");
     }
+  };
+
+  // Xử lý khi nhận quà thành công
+  const handleClaimSuccess = () => {
+    setShowQuest(false);
+    fetchGuilds(); // Cập nhật lại danh sách guilds sau khi nhận quà
   };
 
   if (loading)
@@ -261,7 +279,9 @@ export default function GuildList() {
                 {(isMaster || isOfficer) && (
                   <button
                     className="bg-green-600 text-white px-4 py-1 rounded font-bold shadow hover:bg-green-800 transition cursor-pointer"
-                    onClick={() => router.push(`/guilds/${guild.guildId}/manage`)}
+                    onClick={() =>
+                      router.push(`/guilds/${guild.guildId}/manage`)
+                    }
                   >
                     Quản lý
                   </button>
@@ -281,6 +301,38 @@ export default function GuildList() {
           </div>
         )}
       </div>
+
+      {/* Icon nhiệm vụ */}
+      <button
+        className="fixed bottom-8 right-8 z-50 bg-[#ffb800] text-black p-4 rounded-full shadow-lg hover:bg-yellow-400 transition cursor-pointer transform hover:scale-110"
+        style={{ boxShadow: "0 0 10px rgba(255, 184, 0, 0.5)" }}
+        onClick={() => setShowQuest(true)}
+        aria-label="Nhiệm vụ online"
+      >
+        <FaGift size={28} />
+      </button>
+
+      {/* Popup nhiệm vụ */}
+      {showQuest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black opacity-40"
+            onClick={() => setShowQuest(false)}
+          />
+          {/* Popup nhiệm vụ */}
+          <div className="bg-[#232946] rounded-xl shadow-lg p-6 relative max-w-xl w-full z-10">
+            <button
+              className="absolute top-2 right-2 text-white text-xl cursor-pointer hover:text-[##ffb800]"
+              onClick={() => setShowQuest(false)}
+              aria-label="Đóng"
+            >
+              ×
+            </button>
+            <OnlineGiftBox onClaimSuccess={handleClaimSuccess} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

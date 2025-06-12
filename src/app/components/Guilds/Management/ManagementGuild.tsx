@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Loading from "../../Loading";
 import ParticlesBackground from "../../ParticlesBackground";
@@ -27,10 +27,12 @@ export const ManagementGuildMember = () => {
   const [loading, setLoading] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const [guild, setGuild] = useState<Guild | null>(null);
-  // const [user, setUser] = useState<{ userId: string; fullName: string } | null>(null);
   const [requests, setRequests] = useState<any[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userMap, setUserMap] = useState<Record<string, string>>({});
   const router = useRouter();
   const params = useParams();
+  const siderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 500);
@@ -43,7 +45,7 @@ export const ManagementGuildMember = () => {
       router.push("/login");
       return;
     }
-    // setUser(JSON.parse(userData));
+    setCurrentUserId(JSON.parse(userData).userId);
   }, [router]);
 
   useEffect(() => {
@@ -68,6 +70,47 @@ export const ManagementGuildMember = () => {
           .then((data) => setRequests(data.requests || []));
       });
   }, [params]);
+
+  useEffect(() => {
+    if (!guild) return;
+    const fetchUsers = async () => {
+      const map: Record<string, string> = {};
+      // Lấy tất cả userId từ members và requests
+      const userIds = [
+        ...(guild.members || []),
+        ...(requests.map((r) => r.userId) || []),
+      ];
+      const uniqueUserIds = Array.from(new Set(userIds));
+      await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+          try {
+            const res = await fetch(`/api/users/${userId}`);
+            const data = await res.json();
+            map[userId] = data.fullName || userId;
+          } catch {
+            map[userId] = userId;
+          }
+        })
+      );
+      setUserMap(map);
+    };
+    fetchUsers();
+  }, [guild, requests]);
+
+  // Ẩn Sider khi click ra ngoài
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        siderRef.current &&
+        !siderRef.current.contains(event.target as Node)
+      ) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showMenu]);
 
   // Duyệt yêu cầu tham gia
   const handleAccept = async (requestId: string) => {
@@ -147,7 +190,11 @@ export const ManagementGuildMember = () => {
       </button>
       <div className="min-h-screen bg-gradient-to-br from-[#181c2b] via-[#232946] to-[#0f1021] relative">
         {/* Ẩn/hiện Sider */}
-        {showMenu && <Sider />}
+        {showMenu && (
+          <div ref={siderRef} className="fixed z-50">
+            <Sider />
+          </div>
+        )}
         <div className={`inner-content rounded-lg shadow-md transition-all duration-300 ${showMenu ? "ml-[240px]" : "ml-0"}`}>
           <div className="inner-line py-[30px] border-b border-gray-400 flex justify-end items-center pr-[20px]">
             <Notification />
@@ -157,7 +204,7 @@ export const ManagementGuildMember = () => {
         {/* Nội dung chính */}
         <div className="max-w-3xl mx-auto bg-[#232946] rounded-xl shadow-lg p-8 mt-8">
           <button
-            className="mb-4 flex items-center gap-2 text-[#ffb800] hover:text-[#ffd700] font-bold"
+            className="mb-4 flex items-center gap-2 text-[#ffb800] hover:text-[#ffd700] font-bold cursor-pointer"
             onClick={() => router.back()}
           >
             <FaArrowLeft /> Quay lại
@@ -177,26 +224,29 @@ export const ManagementGuildMember = () => {
             <div className="flex flex-col gap-2">
               {guild.members.map((memberId) => (
                 <div key={memberId} className="flex items-center gap-3 bg-[#181c2b] px-3 py-2 rounded">
-                  <span className="text-white">{memberId}</span>
+                  <span className="text-white">{userMap[memberId] || memberId}</span>
                   {memberId !== guild.masterId && (
                     <>
                       <button
-                        className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-red-700"
+                        className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-red-700 cursor-pointer"
                         onClick={() => handleKick(memberId)}
                       >
                         Kick
                       </button>
-                      <button
-                        className="bg-[#00ffea] text-black px-2 py-1 rounded text-xs font-bold hover:bg-[#ffb800]"
-                        onClick={() =>
-                          handleSetOfficer(
-                            memberId,
-                            guild.officers?.includes(memberId) || false
-                          )
-                        }
-                      >
-                        {guild.officers?.includes(memberId) ? "Bỏ Officer" : "Set Officer"}
-                      </button>
+                      {/* Chỉ master mới được set officer */}
+                      {currentUserId === guild.masterId && (
+                        <button
+                          className="bg-[#00ffea] text-black px-2 py-1 rounded text-xs font-bold hover:bg-[#ffb800] cursor-pointer"
+                          onClick={() =>
+                            handleSetOfficer(
+                              memberId,
+                              guild.officers?.includes(memberId) || false
+                            )
+                          }
+                        >
+                          {guild.officers?.includes(memberId) ? "Bỏ Officer" : "Set Officer"}
+                        </button>
+                      )}
                     </>
                   )}
                   {memberId === guild.masterId && (
@@ -217,7 +267,7 @@ export const ManagementGuildMember = () => {
               )}
               {requests.map((req, index) => (
                 <div key={req.requestId || index} className="flex items-center gap-3 bg-[#181c2b] px-3 py-2 rounded">
-                  <span className="text-white">{req.userId}</span>
+                  <span className="text-white">{userMap[req.userId] || req.userId}</span>
                   <button
                     className="bg-green-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-green-700 cursor-pointer"
                     onClick={() => handleAccept(req.requestId)}

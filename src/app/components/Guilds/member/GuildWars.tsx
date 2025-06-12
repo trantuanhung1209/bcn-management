@@ -6,10 +6,11 @@ import Loading from "../../Loading";
 import ParticlesBackground from "../../ParticlesBackground";
 import { Sider } from "../../Sider/SiderMember";
 import { Notification } from "../../Notification";
-import { FaBars, FaTimes } from "react-icons/fa";
 import GuildList from "./GuildList";
 import GuildRanking from "./GuildRanking";
 import GuildEventBanner from "./GuildEventBanner";
+import { FaBars } from "react-icons/fa6";
+import { FaTimes } from "react-icons/fa";
 
 interface Guild {
   guildId: string;
@@ -38,29 +39,37 @@ export const GuildWarsMember = () => {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const fetchGuilds = async () => {
     const userData = localStorage.getItem("user");
     if (userData) setUser(JSON.parse(userData));
-    fetch("/api/guilds")
-      .then((res) => res.json())
-      .then(async (data) => {
-        const guildsWithMaster = await Promise.all(
-          data.guilds.map(async (g: Guild) => {
-            if (g.masterId) {
-              try {
-                const res = await fetch(`/api/users/${g.masterId}`);
-                const userData = await res.json();
-                return { ...g, masterName: userData.fullName || "Chưa rõ" };
-              } catch {
-                return { ...g, masterName: "Chưa rõ" };
-              }
+
+    try {
+      const res = await fetch("/api/guilds");
+      const data = await res.json();
+      const guildsWithMaster = await Promise.all(
+        data.guilds.map(async (g: Guild) => {
+          if (g.masterId) {
+            try {
+              const res = await fetch(`/api/users/${g.masterId}`);
+              const userData = await res.json();
+              return { ...g, masterName: userData.fullName || "Chưa rõ" };
+            } catch {
+              return { ...g, masterName: "Chưa rõ" };
             }
-            return { ...g, masterName: "Chưa rõ" };
-          })
-        );
-        setGuilds(guildsWithMaster);
-        setLoading(false);
-      });
+          }
+          return { ...g, masterName: "Chưa rõ" };
+        })
+      );
+      setGuilds(guildsWithMaster);
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách guilds:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGuilds();
   }, []);
 
   useEffect(() => {
@@ -86,6 +95,8 @@ export const GuildWarsMember = () => {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showMenu]);
+
+
 
   if (loading) {
     return <Loading />;
@@ -114,7 +125,11 @@ export const GuildWarsMember = () => {
       </button>
       <div className="min-h-screen bg-gradient-to-br from-[#181c2b] via-[#232946] to-[#0f1021] relative">
         {/* Truyền ref vào Sider để bắt sự kiện click ngoài */}
-        {showMenu && <div ref={menuRef}><Sider /></div>}
+        {showMenu && (
+          <div ref={menuRef}>
+            <Sider />
+          </div>
+        )}
         <div
           className={`inner-content rounded-lg shadow-md transition-all duration-300 ${
             showMenu ? "ml-[240px]" : "ml-0"
@@ -129,6 +144,8 @@ export const GuildWarsMember = () => {
         <GuildRanking guilds={guilds} user={user} />
         <GuildList />
         <GuildEventBanner />
+
+        
       </div>
     </>
   );
