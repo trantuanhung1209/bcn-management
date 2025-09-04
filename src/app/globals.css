@@ -1,13 +1,145 @@
 @import "tailwindcss";
-@plugin "daisyui";
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
 
-* {
-  font-family: "Roboto", sans-serif;
-  box-sizing: border-box;
+
+@theme {
+  --color-primary: #e0f7fa;
+  /* màu xanh nhạt / dùng làm nền nổi bật */
+  --color-secondary: #e4ebf1;
+  /* màu xám xanh nhạt */
+  --color-accent: #00d2ff;
+  /* xanh cyan (accent, hover, active) */
+  --color-background: #f0f1f4;
+  --color-background-secondary: #cbd5e1;
+  /* màu nền chính */
+  --color-text-primary: #1f1f1f;
+  /* màu chữ chính */
+  --color-text-secondary: #6b6b6b;
+  /* màu chữ phụ / mô tả */
+  --color-text-accent: #00d2ff;
+  /* chữ nổi bật */
+  --color-text-placeholder: #bfc5cf;
+  /* placeholder nhẹ */
+  --color-border: #dfe4ea;
+  /* viền nhẹ */
+  --color-shadow: rgba(22, 17, 29, 0.23);
+  /* bóng tối nhẹ */
+
+  --color-accent-1: #ffb3ba;
+  /* hồng pastel (nhẹ nhàng, nữ tính, dùng cho highlight nhỏ) */
+  --color-accent-2: #ffdfba;
+  /* cam đào pastel (ấm áp, làm điểm nhấn nhẹ) */
+  --color-accent-3: #ffffba;
+  /* vàng pastel (sáng, gợi năng lượng) */
+  --color-accent-4: #baffc9;
+  /* xanh lá pastel (tươi mới, thư giãn) */
+  --color-accent-5: #bae1ff;
+  /* xanh dương pastel (dịu, đồng bộ với cyan) */
+
+  --breakpoint-xs: 320px;
+  --breakpoint-xxs: 430px;
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 576px;
+  --breakpoint-lg: 680px;
+  --breakpoint-xl: 768px;
+  --breakpoint-2xl: 992px;
+  --breakpoint-3xl: 1024px;
+  --breakpoint-4xl: 1122px;
+  --breakpoint-5xl: 1280px;
+  --breakpoint-6xl: 1340px;
+  --breakpoint-7xl: 1400px;
 }
 
+
+.neumorphic-button {
+  padding: 14px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  letter-spacing: 1px;
+
+  background: var(--color-accent);
+  border-radius: 12px;
+  text-shadow: none;
+
+  /* Inner neumorphic shadow only */
+  box-shadow:
+    inset -6px -6px 12px rgba(22, 17, 29, 0.15),
+    inset 4px 4px 8px #FAFBFF;
+  /* Subtle border */
+  border: 1px solid var(--color-background);
+
+  /* Animation */
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  @media (max-width: 768px) {
+    padding: 12px 24px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 20px;
+    font-size: 11px;
+    border-radius: 10px;
+  }
+}
+
+.neumorphic-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    inset -8px -8px 16px rgba(22, 17, 29, 0.2),
+    inset 4px 4px 8px #FAFBFF,
+    0 0 15px color-mix(in srgb, var(--color-accent) 15%, transparent);
+
+  /* Neon effect with accent color - subtle */
+  color: white;
+  background-color: var(--color-accent);
+
+  /* Animation */
+  transition: all 0.3s ease;
+  animation: digitalGlow 3s ease-in-out infinite alternate;
+}
+
+.neumorphic-button:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow:
+    inset -6px -6px 12px rgba(22, 17, 29, 0.15),
+    inset 6px 6px 12px #FAFBFF;
+
+  /* Pressed effect */
+  color: white;
+  text-shadow: none;
+
+  /* Animation */
+  transition: all 0.1s ease;
+}
+
+.neumorphic-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.section-neumorphic {
+  background: var(--color-background);
+  border-radius: 12px;
+
+  /* Inner neumorphic shadow only */
+  box-shadow:
+    inset -6px -6px 12px rgba(22, 17, 29, 0.15),
+    inset 6px 6px 12px #FAFBFF;
+  /* Subtle border */
+  border: 1px solid rgba(224, 247, 250, 0.2);
+
+  /* Animation */
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
 
 .custom-scrollbar {
   scrollbar-width: thin;
@@ -27,4 +159,51 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #424242;
+}
+
+/* Line clamp utility */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Additional neumorphic styles */
+.neumorphic-input {
+  background: var(--color-background);
+  border-radius: 12px;
+  box-shadow: inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF;
+  border: 1px solid rgba(224, 247, 250, 0.2);
+  transition: all 0.3s ease;
+}
+
+.neumorphic-input:focus {
+  box-shadow: inset 4px 4px 8px rgba(22, 17, 29, 0.15), inset -4px -4px 8px #FAFBFF, 0 0 0 2px var(--color-accent);
+}
+
+.neumorphic-card {
+  background: var(--color-background);
+  border-radius: 16px;
+  box-shadow: 
+    -6px -6px 12px rgba(255, 255, 255, 0.8),
+    6px 6px 12px rgba(22, 17, 29, 0.15);
+  border: 1px solid rgba(224, 247, 250, 0.2);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.neumorphic-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    -8px -8px 16px rgba(255, 255, 255, 0.9),
+    8px 8px 16px rgba(22, 17, 29, 0.2);
 }
