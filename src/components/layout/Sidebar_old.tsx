@@ -2,50 +2,28 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import LogoutConfirmModal from '@/components/ui/LogoutConfirmModal';
 
 interface SidebarProps {
   userRole?: 'admin' | 'manager' | 'member';
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
+const Sidebar: React.FC<SidebarProps> = ({ userRole = 'member' }) => {
   const router = useRouter();
-  const pathname = usePathname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userName, setUserName] = useState('User Name');
-  const [currentRole, setCurrentRole] = useState<'admin' | 'manager' | 'member'>('member');
 
-  // Get user name from localStorage and detect role
+  // Get user name from localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const storedName = localStorage.getItem('userName');
       if (storedName) {
         setUserName(storedName);
       }
-
-      // Detect role from userRole prop, URL, or localStorage
-      if (userRole) {
-        setCurrentRole(userRole);
-        localStorage.setItem('userRole', userRole);
-      } else if (pathname.startsWith('/admin')) {
-        setCurrentRole('admin');
-        localStorage.setItem('userRole', 'admin');
-      } else if (pathname.startsWith('/manager')) {
-        setCurrentRole('manager');
-        localStorage.setItem('userRole', 'manager');
-      } else if (pathname.startsWith('/member')) {
-        setCurrentRole('member');
-        localStorage.setItem('userRole', 'member');
-      } else {
-        const storedRole = localStorage.getItem('userRole') as 'admin' | 'manager' | 'member';
-        if (storedRole) {
-          setCurrentRole(storedRole);
-        }
-      }
     }
-  }, [userRole, pathname]);
+  }, []);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -62,99 +40,41 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
     // Redirect to login page
     router.push('/auth/login');
   };
-
-  const getMenuItems = () => {
-    const baseItems = [
-      {
-        icon: '🏠',
-        label: 'Dashboard',
-        href: `/${currentRole}/dashboard`,
-        roles: ['admin', 'manager', 'member']
-      }
-    ];
-
-    const roleSpecificItems = {
-      admin: [
-        {
-          icon: '👥',
-          label: 'Teams',
-          href: '/admin/teams',
-          roles: ['admin']
-        },
-        {
-          icon: '👨‍💼',
-          label: 'Quản lý Leaders',
-          href: '/admin/leaders',
-          roles: ['admin']
-        },
-        {
-          icon: '👤',
-          label: 'Users',
-          href: '/admin/users',
-          roles: ['admin']
-        },
-        {
-          icon: '📊',
-          label: 'Projects',
-          href: '/admin/projects',
-          roles: ['admin']
-        },
-        {
-          icon: '⚙️',
-          label: 'Settings',
-          href: '/admin/settings',
-          roles: ['admin']
-        }
-      ],
-      manager: [
-        {
-          icon: '👥',
-          label: 'My Team',
-          href: '/manager/teams',
-          roles: ['manager']
-        },
-        {
-          icon: '📊',
-          label: 'Projects',
-          href: '/manager/projects',
-          roles: ['manager']
-        },
-        {
-          icon: '👨‍👩‍👧‍👦',
-          label: 'Members',
-          href: '/manager/members',
-          roles: ['manager']
-        }
-      ],
-      member: [
-        {
-          icon: '📋',
-          label: 'My Tasks',
-          href: '/member/tasks',
-          roles: ['member']
-        },
-        {
-          icon: '📊',
-          label: 'Projects',
-          href: '/member/projects',
-          roles: ['member']
-        },
-        {
-          icon: '👤',
-          label: 'Profile',
-          href: '/member/profile',
-          roles: ['member']
-        }
-      ]
-    };
-
-    return [...baseItems, ...(roleSpecificItems[currentRole] || [])];
-  };
-
-  const menuItems = getMenuItems();
+  const menuItems = [
+    {
+      icon: '🏠',
+      label: 'Dashboard',
+      href: '/dashboard',
+      roles: ['admin', 'manager', 'member']
+    },
+    {
+      icon: '⚡',
+      label: 'Admin Panel',
+      href: '/admin',
+      roles: ['admin']
+    },
+    {
+      icon: '�',
+      label: 'Quản lý Leaders',
+      href: '/admin/leaders',
+      roles: ['admin']
+    },
+    {
+      icon: '�👥',
+      label: 'Teams',
+      href: '/teams',
+      roles: ['admin', 'manager', 'member']
+    },
+    {
+      icon: '⚙️',
+      label: 'Settings',
+      href: '/settings',
+      roles: ['admin']
+    }
+  ];
 
   const filteredItems = menuItems.filter(item => 
-    item.roles.includes(currentRole)
+    item.roles.includes(userRole)
   );
 
   return (
@@ -208,8 +128,8 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
             <div>
               <p className="text-sm font-medium text-gray-800">{userName}</p>
               <p className="text-xs text-gray-600 capitalize">
-                {currentRole === 'admin' ? 'Quản trị viên' : 
-                 currentRole === 'manager' ? 'Quản lý' : 'Thành viên'}
+                {userRole === 'admin' ? 'Quản trị viên' : 
+                 userRole === 'manager' ? 'Quản lý' : 'Thành viên'}
               </p>
             </div>
           </div>

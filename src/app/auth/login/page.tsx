@@ -79,7 +79,7 @@ const LoginPage: React.FC = () => {
         {/* Logo & Title */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <span className="text-2xl text-white font-bold">T</span>
+            <span className="text-2xl text-white font-bold">BM</span>
           </div>
           <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-2">
             Đăng Nhập

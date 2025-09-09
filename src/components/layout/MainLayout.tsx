@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from './Sidebar';
 import LogoutConfirmModal from '@/components/ui/LogoutConfirmModal';
 
@@ -10,10 +10,46 @@ interface MainLayoutProps {
   userRole?: 'admin' | 'manager' | 'member';
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole = 'member' }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [detectedRole, setDetectedRole] = useState<'admin' | 'manager' | 'member'>('member');
+
+  // Detect role from URL path or localStorage
+  useEffect(() => {
+    if (userRole) {
+      setDetectedRole(userRole);
+      return;
+    }
+
+    // Detect from URL path
+    if (pathname.startsWith('/admin')) {
+      setDetectedRole('admin');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userRole', 'admin');
+      }
+    } else if (pathname.startsWith('/manager')) {
+      setDetectedRole('manager');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userRole', 'manager');
+      }
+    } else if (pathname.startsWith('/member')) {
+      setDetectedRole('member');
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userRole', 'member');
+      }
+    } else {
+      // Try to get from localStorage
+      if (typeof window !== 'undefined') {
+        const storedRole = localStorage.getItem('userRole') as 'admin' | 'manager' | 'member';
+        if (storedRole) {
+          setDetectedRole(storedRole);
+        }
+      }
+    }
+  }, [pathname, userRole]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -32,7 +68,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole = 'member' }
   };
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar userRole={userRole} />
+      <Sidebar userRole={detectedRole} />
       
       {/* Main Content */}
       <main className="ml-64 min-h-screen">

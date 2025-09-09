@@ -122,6 +122,85 @@ export class TeamModel {
     return result.modifiedCount > 0;
   }
   
+  // Restore team (undo soft delete)
+  static async restore(id: string | ObjectId): Promise<boolean> {
+    const collection = await getTeamsCollection();
+    const objectId = typeof id === 'string' ? new ObjectId(id) : id;
+    
+    const team = await this.findById(objectId);
+    if (!team) return false;
+    
+    // Check if team is already active
+    if (team.isActive !== false) return false;
+    
+    const result = await collection.updateOne(
+      { _id: objectId },
+      { 
+        $set: { 
+          isActive: true,
+          updatedAt: new Date() 
+        } 
+      }
+    );
+    
+    if (result.modifiedCount > 0) {
+      // Add team back to all members
+      for (const memberId of team.members) {
+        await UserModel.addTeam(memberId, objectId);
+      }
+      
+      // Add team back to team leader
+      await UserModel.addTeam(team.teamLeader, objectId);
+      
+      // Log activity
+      await UserModel.logActivity(team.teamLeader, 'restore', 'team', objectId, {});
+    }
+    
+    return result.modifiedCount > 0;
+  }
+  
+  // Get deleted teams (for restore functionality)
+  static async findDeleted(filters: {
+    teamLeader?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<{ teams: Team[]; total: number }> {
+    const collection = await getTeamsCollection();
+    
+    const query: any = { isActive: false };
+    
+    if (filters.teamLeader) query.teamLeader = new ObjectId(filters.teamLeader);
+    
+    if (filters.search) {
+      query.$and = [
+        { isActive: false },
+        {
+          $or: [
+            { name: { $regex: filters.search, $options: 'i' } },
+            { description: { $regex: filters.search, $options: 'i' } },
+          ]
+        }
+      ];
+      delete query.isActive; // Remove duplicate isActive
+    }
+    
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+    const skip = (page - 1) * limit;
+    
+    const [teams, total] = await Promise.all([
+      collection.find(query)
+        .sort({ updatedAt: -1 }) // Sort by when they were deleted
+        .skip(skip)
+        .limit(limit)
+        .toArray(),
+      collection.countDocuments(query)
+    ]);
+    
+    return { teams, total };
+  }
+  
   // Get all teams with filters
   static async findAll(filters: {
     teamLeader?: string;
@@ -135,7 +214,20 @@ export class TeamModel {
     const query: any = {};
     
     if (filters.teamLeader) query.teamLeader = new ObjectId(filters.teamLeader);
-    if (filters.isActive !== undefined) query.isActive = filters.isActive;
+    
+    // Handle isActive filter - bao gồm cả teams cũ không có field isActive
+    if (filters.isActive !== undefined) {
+      if (filters.isActive) {
+        // Hiển thị teams active hoặc không có field isActive (teams cũ)
+        query.$or = [
+          { isActive: true },
+          { isActive: { $exists: false } }
+        ];
+      } else {
+        // Chỉ hiển thị teams bị deactive
+        query.isActive = false;
+      }
+    }
     
     if (filters.search) {
       query.$or = [
@@ -281,7 +373,14 @@ export class TeamModel {
         { teamLeader: userObjectId },
         { members: userObjectId }
       ],
-      isActive: true
+      $and: [
+        {
+          $or: [
+            { isActive: true },
+            { isActive: { $exists: false } }
+          ]
+        }
+      ]
     }).toArray();
   }
   
