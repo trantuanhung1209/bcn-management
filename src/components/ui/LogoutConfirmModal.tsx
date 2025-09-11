@@ -16,7 +16,7 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
       <div className="bg-[var(--color-background)] rounded-2xl p-6 w-full max-w-md section-neumorphic">
         <div className="text-center">
           <div className="w-16 h-16 bg-gradient-to-r from-red-500 to-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">

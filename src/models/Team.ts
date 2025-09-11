@@ -384,6 +384,37 @@ export class TeamModel {
     }).toArray();
   }
   
+  // Remove user from all teams (for permanent user deletion)
+  static async removeUserFromAllTeams(userId: string | ObjectId): Promise<void> {
+    const collection = await getTeamsCollection();
+    const userObjectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    
+    // Remove user from all teams where they are a member
+    await collection.updateMany(
+      { members: userObjectId },
+      { 
+        $pull: { members: userObjectId },
+        $set: { updatedAt: new Date() }
+      }
+    );
+    
+    // For teams where this user is the team leader, we need to handle this differently
+    // You might want to either:
+    // 1. Delete the team
+    // 2. Transfer leadership to another member
+    // 3. Mark team as inactive
+    // For now, we'll mark teams as inactive if their leader is deleted
+    await collection.updateMany(
+      { teamLeader: userObjectId },
+      { 
+        $set: { 
+          isActive: false,
+          updatedAt: new Date()
+        }
+      }
+    );
+  }
+  
   // Get team statistics
   static async getTeamStats(teamId: string | ObjectId): Promise<{
     memberCount: number;

@@ -106,128 +106,97 @@ const AdminTeamsPage: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamDescription, setNewTeamDescription] = useState('');
   const [newTeamType, setNewTeamType] = useState<'Web' | 'App'>('Web');
 
-  // Mock data
-  useEffect(() => {
-    setTimeout(() => {
-      const allTeams = [
-        {
-          id: '1',
-          name: 'Team Web',
-          description: 'Nhóm phát triển ứng dụng web và website',
-          createdDate: '2024-01-15',
-          status: 'active' as const,
-          color: 'from-blue-500 to-cyan-500',
-          teamType: 'Web',
-          members: [
-            {
-              id: '1',
-              name: 'Nguyễn Văn A',
-              email: 'nguyenvana@test.com',
-              role: 'manager' as const,
-              status: 'active' as const,
-              joinedDate: '2024-01-15',
-              gender: 'Nam' as const,
-              birthday: '2002-03-15',
-              studentId: 'SV001',
-              academicYear: 'K21',
-              field: 'Web' as const,
-              isUP: true
-            },
-            {
-              id: '2',
-              name: 'Trần Thị B',
-              email: 'tranthib@test.com',
-              role: 'member' as const,
-              status: 'active' as const,
-              joinedDate: '2024-01-20',
-              gender: 'Nữ' as const,
-              birthday: '2003-07-22',
-              studentId: 'SV002',
-              academicYear: 'K22',
-              field: 'Web' as const
-            },
-            {
-              id: '3',
-              name: 'Lê Văn C',
-              email: 'levanc@test.com',
-              role: 'member' as const,
-              status: 'active' as const,
-              joinedDate: '2024-02-01',
-              gender: 'Nam' as const,
-              birthday: '2002-11-08',
-              studentId: 'SV003',
-              academicYear: 'K21',
-              field: 'Web' as const
-            }
-          ]
-        },
-        {
-          id: '2',
-          name: 'Team App',
-          description: 'Nhóm phát triển ứng dụng di động iOS và Android',
-          createdDate: '2024-01-10',
-          status: 'active' as const,
-          color: 'from-green-500 to-emerald-500',
-          teamType: 'App',
-          members: [
-            {
-              id: '4',
-              name: 'Phạm Thị D',
-              email: 'phamthid@test.com',
-              role: 'manager' as const,
-              status: 'active' as const,
-              joinedDate: '2024-01-10',
-              gender: 'Nữ' as const,
-              birthday: '2001-12-05',
-              studentId: 'SV004',
-              academicYear: 'K20',
-              field: 'App' as const,
-              isUP: true
-            },
-            {
-              id: '5',
-              name: 'Hoàng Văn E',
-              email: 'hoangvane@test.com',
-              role: 'member' as const,
-              status: 'active' as const,
-              joinedDate: '2024-01-25',
-              gender: 'Nam' as const,
-              birthday: '2003-04-18',
-              studentId: 'SV005',
-              academicYear: 'K22',
-              field: 'App' as const
-            }
-          ]
-        }
-      ];
-
-      setTeams(allTeams);
+  // Fetch teams from API
+  const fetchTeams = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/teams?limit=100&withMembers=true');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch teams');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Transform MongoDB data to match our interface
+        const transformedTeams = data.data.teams.map((team: any) => ({
+          id: team._id,
+          name: team.name,
+          description: team.description || '',
+          members: team.membersInfo || [], // Use the detailed member info from API
+          createdDate: team.createdAt,
+          status: team.isActive ? 'active' : 'inactive',
+          color: team.name.includes('Web') ? 'from-blue-500 to-cyan-500' : 'from-green-500 to-emerald-500',
+          teamType: team.name.includes('Web') ? 'Web' : 'App'
+        }));
+        
+        setTeams(transformedTeams);
+      } else {
+        setError(data.error || 'Failed to fetch teams');
+      }
+    } catch (err) {
+      console.error('Error fetching teams:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+
+  useEffect(() => {
+    fetchTeams();
   }, []);
 
-  const handleCreateTeam = () => {
-    if (newTeamName.trim()) {
-      const newTeam: Team = {
-        id: Date.now().toString(),
-        name: newTeamName,
-        description: newTeamDescription,
-        createdDate: new Date().toISOString().split('T')[0],
-        status: 'active',
-        color: newTeamType === 'Web' ? 'from-blue-500 to-cyan-500' : 'from-green-500 to-emerald-500',
-        teamType: newTeamType,
-        members: []
-      };
-      
-      setTeams(prev => [...prev, newTeam]);
-      setNewTeamName('');
-      setNewTeamDescription('');
-      setNewTeamType('Web');
-      setIsCreateModalOpen(false);
+  const handleCreateTeam = async () => {
+    if (!newTeamName.trim()) {
+      alert('Vui lòng nhập tên team');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/teams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newTeamName,
+          description: newTeamDescription,
+          teamLeader: '507f1f77bcf86cd799439011', // Temporary - should be current user ID
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Transform and add to teams list
+        const newTeam: Team = {
+          id: data.data._id,
+          name: data.data.name,
+          description: data.data.description || '',
+          members: [],
+          createdDate: data.data.createdAt,
+          status: 'active',
+          color: newTeamType === 'Web' ? 'from-blue-500 to-cyan-500' : 'from-green-500 to-emerald-500',
+          teamType: newTeamType,
+        };
+        
+        setTeams(prev => [...prev, newTeam]);
+        setNewTeamName('');
+        setNewTeamDescription('');
+        setNewTeamType('Web');
+        setIsCreateModalOpen(false);
+      } else {
+        alert(data.error || 'Failed to create team');
+      }
+    } catch (error) {
+      console.error('Error creating team:', error);
+      alert('An error occurred while creating the team');
     }
   };
 
@@ -236,6 +205,24 @@ const AdminTeamsPage: React.FC = () => {
       <MainLayout userRole="admin">
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout userRole="admin">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-500 mb-4">{error}</p>
+            <button 
+              onClick={fetchTeams}
+              className="neumorphic-button px-4 py-2"
+            >
+              Thử lại
+            </button>
+          </div>
         </div>
       </MainLayout>
     );
@@ -255,6 +242,26 @@ const AdminTeamsPage: React.FC = () => {
             </p>
           </div>
           <div className="flex space-x-3">
+            <button
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/seed', { method: 'POST' });
+                  const data = await response.json();
+                  if (data.success) {
+                    alert('Dữ liệu mẫu đã được tạo thành công!');
+                    fetchTeams(); // Refresh data
+                  } else {
+                    alert('Lỗi tạo dữ liệu mẫu: ' + data.error);
+                  }
+                } catch (error) {
+                  alert('Lỗi: ' + (error instanceof Error ? error.message : 'Unknown error'));
+                }
+              }}
+              className="neumorphic-button flex items-center space-x-2 bg-purple-500 hover:bg-purple-600 text-white"
+            >
+              <span>🔧</span>
+              <span>Tạo Dữ Liệu Mẫu</span>
+            </button>
             <button
               onClick={() => window.location.href = '/admin/teams/deleted'}
               className="neumorphic-button flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white"
@@ -395,7 +402,7 @@ const AdminTeamsPage: React.FC = () => {
 
         {/* Create Team Modal */}
         {isCreateModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
             <div className="bg-[var(--color-background)] rounded-2xl p-6 w-full max-w-md section-neumorphic">
               <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4">
                 Tạo Team Mới

@@ -117,6 +117,19 @@ export class UserModel {
     return result.modifiedCount > 0;
   }
   
+  // Permanently delete user (hard delete)
+  static async permanentDelete(id: string | ObjectId): Promise<boolean> {
+    const collection = await getUsersCollection();
+    const objectId = typeof id === 'string' ? new ObjectId(id) : id;
+    
+    // Log activity before deletion
+    await this.logActivity(objectId, 'permanent_delete', 'user', objectId, {});
+    
+    const result = await collection.deleteOne({ _id: objectId });
+    
+    return result.deletedCount > 0;
+  }
+  
   // Get all users with filters
   static async findAll(filters: {
     role?: UserRole;

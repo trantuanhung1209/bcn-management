@@ -346,9 +346,9 @@ export default function DeletedTeamsPage() {
                           Thành viên trong team
                         </p>
                         <div className="flex flex-wrap gap-2">
-                          {team.members.slice(0, 4).map((member) => (
+                          {team.members.slice(0, 4).map((member, index) => (
                             <span
-                              key={member._id}
+                              key={`${team._id}-member-${member._id}-${index}`}
                               className="px-3 py-1 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 rounded-full text-xs font-medium border border-blue-200"
                             >
                               {member.name}
@@ -415,7 +415,7 @@ export default function DeletedTeamsPage() {
                     
                     return (
                       <button
-                        key={page}
+                        key={`pagination-${i}-${page}`}
                         onClick={() => handlePageChange(page)}
                         className={`px-3 py-2 text-sm rounded-lg transition-all duration-200 min-w-[40px] ${
                           currentPage === page
@@ -426,7 +426,7 @@ export default function DeletedTeamsPage() {
                         {page}
                       </button>
                     );
-                  })}
+                  }).filter(Boolean)}
                 </div>
                 
                 <button

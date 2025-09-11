@@ -82,12 +82,6 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
           roles: ['admin']
         },
         {
-          icon: '👨‍💼',
-          label: 'Quản lý Leaders',
-          href: '/admin/leaders',
-          roles: ['admin']
-        },
-        {
           icon: '👤',
           label: 'Users',
           href: '/admin/users',
@@ -161,26 +155,35 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
     <aside className="fixed left-0 top-0 h-screen w-64 section-neumorphic p-6 z-10">
       {/* Logo */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">
+        <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
           TeamHub
         </h1>
-        <p className="text-sm text-gray-600">Management System</p>
+        <p className="text-sm text-[var(--color-text-secondary)]">Management System</p>
       </div>
 
       {/* Navigation */}
       <nav className="space-y-2">
-        {filteredItems.map((item, index) => (
-          <Link
-            key={index}
-            href={item.href}
-            className="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:text-blue-600 transition-all duration-200 hover:bg-white group"
-          >
-            <span className="text-xl group-hover:scale-110 transition-transform duration-200">
-              {item.icon}
-            </span>
-            <span className="font-medium">{item.label}</span>
-          </Link>
-        ))}
+        {filteredItems.map((item, index) => {
+          // Check if current page is active
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          
+          return (
+            <Link
+              key={index}
+              href={item.href}
+              className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                isActive 
+                  ? 'neumorphic-button bg-[var(--color-accent)] text-white shadow-lg font-semibold' 
+                  : 'text-[var(--color-text-primary)] hover:text-[var(--color-accent)] hover:bg-white/50 neumorphic-button-hover'
+              }`}
+            >
+              <span className="text-xl group-hover:scale-110 transition-transform duration-200">
+                {item.icon}
+              </span>
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
       </nav>
 
       {/* User Profile */}
@@ -189,7 +192,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         <button
           onClick={() => setShowLogoutModal(true)}
           disabled={isLoggingOut}
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed neumorphic-button-hover"
         >
           <span className="text-xl group-hover:scale-110 transition-transform duration-200">
             {isLoggingOut ? '⏳' : '🚪'}
@@ -200,14 +203,14 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         </button>
 
         {/* User Info */}
-        <div className="bg-white rounded-xl p-4 shadow-sm">
+        <div className="bg-[var(--color-background)] rounded-xl p-4 section-neumorphic">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
               U
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-800">{userName}</p>
-              <p className="text-xs text-gray-600 capitalize">
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">{userName}</p>
+              <p className="text-xs text-[var(--color-text-secondary)] capitalize">
                 {currentRole === 'admin' ? 'Quản trị viên' : 
                  currentRole === 'manager' ? 'Quản lý' : 'Thành viên'}
               </p>

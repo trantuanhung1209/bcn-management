@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TeamModel } from '@/models/Team';
+import { UserModel } from '@/models/User';
 import { ObjectId } from 'mongodb';
 
 // GET - Lấy danh sách teams
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
+    const withMembers = searchParams.get('withMembers') === 'true';
 
     const filters: any = {};
     
@@ -23,6 +25,70 @@ export async function GET(request: NextRequest) {
     filters.limit = limit;
 
     const { teams, total } = await TeamModel.findAll(filters);
+
+    // Nếu cần thông tin members chi tiết
+    if (withMembers) {
+      const teamsWithMembers = await Promise.all(
+        teams.map(async (team) => {
+          try {
+            // Lấy thông tin team leader
+            const teamLeaderInfo = await UserModel.findById(team.teamLeader);
+            
+            // Lấy thông tin members
+            const memberInfos = await Promise.all(
+              team.members.map(async (memberId) => {
+                try {
+                  return await UserModel.findById(memberId);
+                } catch (error) {
+                  console.error(`Error fetching member ${memberId}:`, error);
+                  return null;
+                }
+              })
+            );
+            
+            // Filter out null members và transform data
+            const validMembers = memberInfos
+              .filter(Boolean)
+              .map(member => ({
+                id: member!._id!.toString(),
+                name: `${member!.firstName} ${member!.lastName}`,
+                email: member!.email,
+                role: member!.role === 'team_leader' ? 'manager' : 
+                      member!.role === 'admin' ? 'admin' : 'member',
+                avatar: member!.avatar,
+                status: member!.isActive ? 'active' : 'inactive',
+                joinedDate: member!.createdAt.toISOString(),
+                gender: member!.gender || 'Nam',
+                birthday: member!.birthday || '2000-01-01',
+                studentId: member!.studentId || `SV${member!._id!.toString().slice(-3)}`,
+                academicYear: member!.academicYear || 'K21',
+                field: member!.field || (team.name.includes('Web') ? 'Web' : 'App'),
+                isUP: member!.role === 'team_leader'
+              }));
+
+            return {
+              ...team,
+              teamLeaderName: teamLeaderInfo ? `${teamLeaderInfo.firstName} ${teamLeaderInfo.lastName}` : 'Unknown',
+              membersInfo: validMembers
+            };
+          } catch (error) {
+            console.error(`Error fetching team ${team._id} members:`, error);
+            return team;
+          }
+        })
+      );
+      
+      return NextResponse.json({
+        success: true,
+        data: {
+          teams: teamsWithMembers,
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit)
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,

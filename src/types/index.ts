@@ -45,6 +45,11 @@ export interface User {
   avatar?: string;
   phone?: string;
   department?: string;
+  gender?: 'Nam' | 'Nữ' | 'Khác';
+  birthday?: string;
+  studentId?: string;
+  academicYear?: string;
+  field?: 'Web' | 'App';
   teams: ObjectId[];
   projects: ObjectId[];
   isActive: boolean;

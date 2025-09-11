@@ -42,3 +42,11 @@ export async function PUT(
     );
   }
 }
+
+// POST - Khôi phục team đã bị xóa (alias for PUT)
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
+  return PUT(request, { params });
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserModel } from '@/models/User';
+import { ObjectId } from 'mongodb';
 
 export async function GET(request: NextRequest) {
   try {
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { firstName, lastName, email, role, department } = body;
+    const { firstName, lastName, email, role, department, teams } = body;
 
     // Check if user already exists
     const existingUser = await UserModel.findByEmail(email);
@@ -68,6 +69,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Convert teams string array to ObjectId array
+    const teamObjectIds = teams ? teams.map((teamId: string) => new ObjectId(teamId)) : [];
+
     // Create new user
     const userData = {
       firstName,
@@ -76,7 +80,7 @@ export async function POST(request: NextRequest) {
       role,
       department,
       password: 'defaultPassword123', // Should be changed on first login
-      teams: [],
+      teams: teamObjectIds,
       projects: [],
       isActive: true
     };

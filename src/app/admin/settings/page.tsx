@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 
 const SettingsPage: React.FC = () => {
-  const [userRole, setUserRole] = useState<'admin' | 'manager' | 'member'>('member');
+  const [userRole, setUserRole] = useState<'admin' | 'manager' | 'member'>('admin'); // Default to admin since this is admin settings page
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Get user role from localStorage
@@ -13,8 +14,18 @@ const SettingsPage: React.FC = () => {
       if (storedRole) {
         setUserRole(storedRole);
       }
+      setIsLoading(false);
     }
   }, []);
+
+  // Show loading while checking role
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   // Redirect if not admin
   if (userRole !== 'admin') {
