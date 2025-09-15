@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { UserModel } from '@/models/User';
 import { ObjectId } from 'mongodb';
+import { filterUsersForManager } from '@/lib/server-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,6 +11,10 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const role = searchParams.get('role') || '';
     const isActive = searchParams.get('deleted') !== 'true';
+    
+    // Lấy thông tin user để xác định quyền truy cập
+    const userId = searchParams.get('userId');
+    const userRole = searchParams.get('userRole');
 
     // Build filters
     const filters: any = { 
@@ -27,7 +32,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get users with pagination
-    const { users, total } = await UserModel.findAll(filters);
+    let { users, total } = await UserModel.findAll(filters);
+
+    // Áp dụng phân quyền theo team cho manager
+    if (userId && userRole && userRole === 'manager') {
+      users = await filterUsersForManager(userId, userRole, users);
+      total = users.length; // Cập nhật lại total sau khi filter
+    }
 
     // Remove passwords from response
     const safeUsers = users.map(user => {

@@ -3,6 +3,7 @@ import { ObjectId } from 'mongodb';
 // User roles in the system
 export enum UserRole {
   ADMIN = 'admin',
+  MANAGER = 'manager',
   TEAM_LEADER = 'team_leader',
   MEMBER = 'member',
   VIEWER = 'viewer'
@@ -63,7 +64,7 @@ export interface Team {
   _id?: ObjectId;
   name: string;
   description?: string;
-  teamLeader: ObjectId;
+  teamLeader: ObjectId; // Single team leader
   members: ObjectId[];
   projects: ObjectId[];
   isActive: boolean;
@@ -84,7 +85,7 @@ export interface Project {
   endDate?: Date;
   deadline?: Date;
   progress: number; // 0-100
-  budget?: number;
+  coins?: number;
   tags: string[];
   attachments: string[];
   isActive: boolean;

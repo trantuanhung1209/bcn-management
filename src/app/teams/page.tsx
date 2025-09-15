@@ -9,12 +9,12 @@ const TeamsRedirectPage: React.FC = () => {
   useEffect(() => {
     // Get user role from localStorage and redirect to appropriate teams page
     if (typeof window !== 'undefined') {
-      const userRole = localStorage.getItem('userRole') as 'admin' | 'manager' | 'member';
+      const userRole = localStorage.getItem('userRole') as 'admin' | 'team_leader' | 'member';
       
       if (userRole === 'admin') {
-        router.push('/admin/teams');
-      } else if (userRole === 'manager') {
-        router.push('/manager/teams');
+        // Admin có thể ở trang này
+      } else if (userRole === 'team_leader') {
+        router.push('/team_leader/teams');
       } else {
         // Members don't have access to teams management, redirect to dashboard
         router.push('/member/dashboard');

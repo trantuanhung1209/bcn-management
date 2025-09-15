@@ -83,12 +83,13 @@ export async function PUT(
           !currentTeamIds.some((currentTeamId: ObjectId) => currentTeamId.equals(newTeamId))
       );
 
-      // Remove user from old teams (this will also update user.teams via TeamModel.removeMember)
+      // Remove user from old teams
       for (const teamId of teamsToRemove) {
         await TeamModel.removeMember(teamId, id);
       }
 
-      // Add user to new teams (this will also update user.teams via TeamModel.addMember)
+      // Add user to new teams - always as member regardless of role
+      // Team leadership is handled separately by updating the teamLeader field directly in the team
       for (const teamId of teamsToAdd) {
         await TeamModel.addMember(teamId, id);
       }

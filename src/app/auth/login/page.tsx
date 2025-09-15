@@ -29,44 +29,49 @@ const LoginPage: React.FC = () => {
     setError('');
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock login validation
-      if (formData.email === 'admin@test.com' && formData.password === 'admin123') {
-        // Save auth token to localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('authToken', 'mock-jwt-token-12345');
-          localStorage.setItem('userRole', 'admin');
-          localStorage.setItem('userName', 'Admin User');
-          localStorage.setItem('managedTeam', 'all'); // Admin quản lý tất cả
-        }
+      // Call login API
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        const { user, token } = result.data;
         
-        router.push('/dashboard');
-      } else if (formData.email === 'webmanager@test.com' && formData.password === 'web123') {
-        // Web Team Manager
+        // Save auth data to localStorage
         if (typeof window !== 'undefined') {
-          localStorage.setItem('authToken', 'mock-jwt-token-web');
-          localStorage.setItem('userRole', 'manager');
-          localStorage.setItem('userName', 'Web Manager');
-          localStorage.setItem('managedTeam', 'web'); // Chỉ quản lý team web
-        }
-        
-        router.push('/dashboard');
-      } else if (formData.email === 'appmanager@test.com' && formData.password === 'app123') {
-        // App Team Manager
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('authToken', 'mock-jwt-token-app');
-          localStorage.setItem('userRole', 'manager');
-          localStorage.setItem('userName', 'App Manager');
-          localStorage.setItem('managedTeam', 'app'); // Chỉ quản lý team app
+          localStorage.setItem('authToken', token);
+          localStorage.setItem('userRole', user.role);
+          localStorage.setItem('userName', `${user.firstName} ${user.lastName}`);
+          localStorage.setItem('userId', user._id);
+          localStorage.setItem('userEmail', user.email);
+          
+          // Set managed team based on user's field or teams
+          if (user.role === 'admin') {
+            localStorage.setItem('managedTeam', 'all');
+          } else if (user.field === 'Web') {
+            localStorage.setItem('managedTeam', 'web');
+          } else if (user.field === 'App') {
+            localStorage.setItem('managedTeam', 'app');
+          } else {
+            localStorage.setItem('managedTeam', user.teams?.[0] || '');
+          }
         }
         
         router.push('/dashboard');
       } else {
-        setError('Email hoặc mật khẩu không đúng');
+        setError(result.error || 'Đăng nhập thất bại');
       }
-    } catch {
+    } catch (error) {
+      console.error('Login error:', error);
       setError('Đã có lỗi xảy ra. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
@@ -219,21 +224,27 @@ const LoginPage: React.FC = () => {
         {/* Demo Credentials */}
         <div className="mt-6 space-y-3">
           <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-            <p className="text-sm text-blue-700 font-medium mb-2">👑 Admin Account:</p>
-            <p className="text-sm text-blue-600">Email: admin@test.com</p>
-            <p className="text-sm text-blue-600">Password: admin123</p>
+            <p className="text-sm text-blue-700 font-medium mb-2">👑 Team Leader Web:</p>
+            <p className="text-sm text-blue-600">Email: leader.web@bcn.com</p>
+            <p className="text-sm text-blue-600">Password: leader123</p>
           </div>
           
           <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-            <p className="text-sm text-green-700 font-medium mb-2">🌐 Web Team Manager:</p>
-            <p className="text-sm text-green-600">Email: webmanager@test.com</p>
-            <p className="text-sm text-green-600">Password: web123</p>
+            <p className="text-sm text-green-700 font-medium mb-2">📱 Team Leader App:</p>
+            <p className="text-sm text-green-600">Email: leader.app@bcn.com</p>
+            <p className="text-sm text-green-600">Password: leader123</p>
           </div>
           
           <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
-            <p className="text-sm text-purple-700 font-medium mb-2">📱 App Team Manager:</p>
-            <p className="text-sm text-purple-600">Email: appmanager@test.com</p>
-            <p className="text-sm text-purple-600">Password: app123</p>
+            <p className="text-sm text-purple-700 font-medium mb-2">� Member Web:</p>
+            <p className="text-sm text-purple-600">Email: member1@bcn.com</p>
+            <p className="text-sm text-purple-600">Password: member123</p>
+          </div>
+          
+          <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
+            <p className="text-sm text-orange-700 font-medium mb-2">👤 Member App:</p>
+            <p className="text-sm text-orange-600">Email: member3@bcn.com</p>
+            <p className="text-sm text-orange-600">Password: member123</p>
           </div>
         </div>
       </div>

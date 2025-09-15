@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import LogoutConfirmModal from '@/components/ui/LogoutConfirmModal';
 
 interface SidebarProps {
-  userRole?: 'admin' | 'manager' | 'member';
+  userRole?: 'admin' | 'team_leader' | 'member';
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
@@ -15,7 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userName, setUserName] = useState('User Name');
-  const [currentRole, setCurrentRole] = useState<'admin' | 'manager' | 'member'>('member');
+  const [currentRole, setCurrentRole] = useState<'admin' | 'team_leader' | 'member'>('member');
 
   // Get user name from localStorage and detect role
   useEffect(() => {
@@ -32,16 +32,20 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
       } else if (pathname.startsWith('/admin')) {
         setCurrentRole('admin');
         localStorage.setItem('userRole', 'admin');
-      } else if (pathname.startsWith('/manager')) {
-        setCurrentRole('manager');
-        localStorage.setItem('userRole', 'manager');
+      } else if (pathname.startsWith('/team_leader')) {
+        setCurrentRole('team_leader');
+        localStorage.setItem('userRole', 'team_leader');
       } else if (pathname.startsWith('/member')) {
         setCurrentRole('member');
         localStorage.setItem('userRole', 'member');
       } else {
-        const storedRole = localStorage.getItem('userRole') as 'admin' | 'manager' | 'member';
+        const storedRole = localStorage.getItem('userRole');
         if (storedRole) {
-          setCurrentRole(storedRole);
+          // Convert old 'manager' role to 'team_leader'
+          const normalizedRole = storedRole === 'manager' ? 'team_leader' : storedRole;
+          if (normalizedRole === 'admin' || normalizedRole === 'team_leader' || normalizedRole === 'member') {
+            setCurrentRole(normalizedRole);
+          }
         }
       }
     }
@@ -69,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         icon: '🏠',
         label: 'Dashboard',
         href: `/${currentRole}/dashboard`,
-        roles: ['admin', 'manager', 'member']
+        roles: ['admin', 'team_leader', 'member']
       }
     ];
 
@@ -100,25 +104,19 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
           roles: ['admin']
         }
       ],
-      manager: [
+      team_leader: [
         {
           icon: '👥',
           label: 'My Team',
-          href: '/manager/teams',
-          roles: ['manager']
+          href: '/team_leader/teams',
+          roles: ['team_leader']
         },
         {
           icon: '📊',
           label: 'Projects',
-          href: '/manager/projects',
-          roles: ['manager']
+          href: '/team_leader/projects',
+          roles: ['team_leader']
         },
-        {
-          icon: '👨‍👩‍👧‍👦',
-          label: 'Members',
-          href: '/manager/members',
-          roles: ['manager']
-        }
       ],
       member: [
         {
@@ -212,7 +210,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
               <p className="text-sm font-medium text-[var(--color-text-primary)]">{userName}</p>
               <p className="text-xs text-[var(--color-text-secondary)] capitalize">
                 {currentRole === 'admin' ? 'Quản trị viên' : 
-                 currentRole === 'manager' ? 'Quản lý' : 'Thành viên'}
+                 currentRole === 'team_leader' ? 'Trưởng nhóm' : 'Thành viên'}
               </p>
             </div>
           </div>

@@ -108,6 +108,8 @@ export default function AdminUsersPage() {
     email: "",
     role: "member" as "team_leader" | "member" | "viewer",
     teamId: "",
+    department: "",
+    field: "" as "Web" | "App" | "",
   });
 
   useEffect(() => {
@@ -152,9 +154,11 @@ export default function AdminUsersPage() {
       // Prepare data to send
       const submitData = editingUser 
         ? {
-            // When editing, send role and teams (always send teams array to update team associations)
+            // When editing, send role, teams, department, and field (always send teams array to update team associations)
             role: formData.role,
-            teams: formData.teamId ? [formData.teamId] : []
+            teams: formData.teamId ? [formData.teamId] : [],
+            department: formData.department,
+            field: formData.field,
           }
         : {
             // When creating, send all fields
@@ -162,6 +166,8 @@ export default function AdminUsersPage() {
             lastName: formData.lastName,
             email: formData.email,
             role: formData.role,
+            department: formData.department,
+            field: formData.field,
             ...(formData.teamId && { teams: [formData.teamId] })
           };
 
@@ -183,6 +189,8 @@ export default function AdminUsersPage() {
           email: "",
           role: "member",
           teamId: "",
+          department: "",
+          field: "",
         });
         
         // Show success message
@@ -203,12 +211,17 @@ export default function AdminUsersPage() {
 
   const handleEdit = (user: User) => {
     setEditingUser(user);
+    const teamId = user.teams && user.teams.length > 0 ? user.teams[0] : "";
+    const teamInfo = getTeamInfo(teamId);
+    
     setFormData({
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
       role: user.role === "admin" ? "member" : user.role, // Convert admin to member for editing
-      teamId: user.teams && user.teams.length > 0 ? user.teams[0] : "",
+      teamId: teamId,
+      department: user.department || teamInfo.department,
+      field: user.field || teamInfo.field,
     });
     setShowCreateModal(true);
   };
@@ -241,6 +254,34 @@ export default function AdminUsersPage() {
     if (!teamIds || teamIds.length === 0) return null;
     const team = teams.find((t) => t._id === teamIds[0]);
     return team ? team.name : null;
+  };
+
+  // Function to determine department and field based on team
+  const getTeamInfo = (teamId: string): { department: string; field: "" | "Web" | "App" } => {
+    if (!teamId) return { department: "", field: "" };
+    
+    const team = teams.find((t) => t._id === teamId);
+    if (!team) return { department: "", field: "" };
+    
+    // Determine department and field based on team name
+    if (team.name.toLowerCase().includes('web')) {
+      return { department: "Web Development", field: "Web" };
+    } else if (team.name.toLowerCase().includes('app') || team.name.toLowerCase().includes('mobile')) {
+      return { department: "App Development", field: "App" };
+    }
+    
+    return { department: "", field: "" };
+  };
+
+  // Handle team change
+  const handleTeamChange = (teamId: string) => {
+    const teamInfo = getTeamInfo(teamId);
+    setFormData(prev => ({
+      ...prev,
+      teamId,
+      department: teamInfo.department,
+      field: teamInfo.field,
+    }));
   };
 
   // Filter users based on search term and role filter (excluding admin users)
@@ -315,6 +356,8 @@ export default function AdminUsersPage() {
                     email: "",
                     role: "member",
                     teamId: "",
+                    department: "",
+                    field: "",
                   });
                   setShowCreateModal(true);
                 }}
@@ -635,9 +678,7 @@ export default function AdminUsersPage() {
                   </label>
                   <select
                     value={formData.teamId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, teamId: e.target.value })
-                    }
+                    onChange={(e) => handleTeamChange(e.target.value)}
                     className="neumorphic-input w-full px-4 py-3 text-[var(--color-text-primary)] focus:outline-none"
                   >
                     <option value="">No team assigned</option>

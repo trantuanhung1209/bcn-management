@@ -55,11 +55,32 @@ export async function PUT(
       );
     }
 
+    // Helper function to handle team ID mapping (same as in POST)
+    const getTeamObjectId = (teamId: string) => {
+      const teamMapping: { [key: string]: string } = {
+        '1': '507f1f77bcf86cd799439011', // Example ObjectId for Team Web
+        '2': '507f1f77bcf86cd799439012', // Example ObjectId for Team App
+      };
+      
+      const mappedId = teamMapping[teamId];
+      if (mappedId) {
+        return new ObjectId(mappedId);
+      }
+      
+      if (ObjectId.isValid(teamId)) {
+        return new ObjectId(teamId);
+      }
+      
+      return new ObjectId();
+    };
+
     // Convert string IDs to ObjectIds if present
     const updateData = { ...data };
-    if (updateData.team) updateData.team = new ObjectId(updateData.team);
+    if (updateData.team) updateData.team = getTeamObjectId(updateData.team);
     if (updateData.assignedTo) {
-      updateData.assignedTo = updateData.assignedTo.map((userId: string) => new ObjectId(userId));
+      updateData.assignedTo = updateData.assignedTo.map((userId: string) => 
+        ObjectId.isValid(userId) ? new ObjectId(userId) : new ObjectId()
+      );
     }
     if (updateData.startDate) updateData.startDate = new Date(updateData.startDate);
     if (updateData.endDate) updateData.endDate = new Date(updateData.endDate);

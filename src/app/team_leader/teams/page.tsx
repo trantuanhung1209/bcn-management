@@ -105,7 +105,6 @@ interface Team {
 const ManagerTeamsPage: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [managedTeam, setManagedTeam] = useState<string>('');
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [newMemberGender, setNewMemberGender] = useState<'Nam' | 'Nữ' | 'Khác'>('Nam');
@@ -122,158 +121,131 @@ const ManagerTeamsPage: React.FC = () => {
   const [filterField, setFilterField] = useState<'all' | 'Web' | 'App'>('all');
   const [filterAcademicYear, setFilterAcademicYear] = useState<string>('all');
 
-  // Get user role and managed team from localStorage
+  // Get current user and team data
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedManagedTeam = localStorage.getItem('managedTeam') || '';
-      setManagedTeam(storedManagedTeam);
-    }
+    const fetchTeamData = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Tạm thời dùng userId từ localStorage hoặc test với team leader đã tạo
+        // Trong thực tế sẽ lấy từ session/JWT
+        const userId = localStorage.getItem('userId') || '507f1f77bcf86cd799439011'; // Fallback ID
+        
+        // Fetch team leader info và teams
+        const response = await fetch(`/api/team_leader/me?userId=${userId}`);
+        const data = await response.json();
+        
+        if (data.success && data.data.teams.length > 0) {
+          // Lấy team đầu tiên (team leader chỉ quản lý 1 team)
+          const team = data.data.teams[0];
+          
+          // Fetch chi tiết members của team
+          const membersResponse = await fetch(`/api/team_leader/teams/${team._id}/members`);
+          const membersData = await membersResponse.json();
+          
+          if (membersData.success) {
+            const teamData = {
+              id: membersData.data.team.id,
+              name: membersData.data.team.name,
+              description: membersData.data.team.description,
+              createdDate: membersData.data.team.createdDate,
+              status: membersData.data.team.status,
+              color: membersData.data.team.color,
+              teamType: membersData.data.team.teamType,
+              members: membersData.data.members
+            };
+            
+            setTeams([teamData]);
+          }
+        } else {
+          setTeams([]);
+        }
+      } catch (error) {
+        console.error('Error fetching team data:', error);
+        setTeams([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTeamData();
   }, []);
 
-  // Mock data
-  useEffect(() => {
-    setTimeout(() => {
-      const allTeams = [
-        {
-          id: '1',
-          name: 'Team Web',
-          description: 'Nhóm phát triển ứng dụng web và website',
-          createdDate: '2024-01-15',
-          status: 'active' as const,
-          color: 'from-blue-500 to-cyan-500',
-          teamType: 'web',
-          members: [
-            {
-              id: '1',
-              name: 'Nguyễn Văn A',
-              email: 'nguyenvana@test.com',
-              role: 'manager' as const,
-              status: 'active' as const,
-              joinedDate: '2024-01-15',
-              gender: 'Nam' as const,
-              birthday: '2002-03-15',
-              studentId: 'SV001',
-              academicYear: 'K21',
-              field: 'Web' as const,
-              isUP: true
-            },
-            {
-              id: '2',
-              name: 'Trần Thị B',
-              email: 'tranthib@test.com',
-              role: 'member' as const,
-              status: 'active' as const,
-              joinedDate: '2024-01-20',
-              gender: 'Nữ' as const,
-              birthday: '2003-07-22',
-              studentId: 'SV002',
-              academicYear: 'K22',
-              field: 'Web' as const
-            },
-            {
-              id: '3',
-              name: 'Lê Văn C',
-              email: 'levanc@test.com',
-              role: 'member' as const,
-              status: 'active' as const,
-              joinedDate: '2024-02-01',
-              gender: 'Nam' as const,
-              birthday: '2002-11-08',
-              studentId: 'SV003',
-              academicYear: 'K21',
-              field: 'Web' as const
-            }
-          ]
-        },
-        {
-          id: '2',
-          name: 'Team App',
-          description: 'Nhóm phát triển ứng dụng di động iOS và Android',
-          createdDate: '2024-01-10',
-          status: 'active' as const,
-          color: 'from-green-500 to-emerald-500',
-          teamType: 'app',
-          members: [
-            {
-              id: '4',
-              name: 'Phạm Thị D',
-              email: 'phamthid@test.com',
-              role: 'manager' as const,
-              status: 'active' as const,
-              joinedDate: '2024-01-10',
-              gender: 'Nữ' as const,
-              birthday: '2001-12-05',
-              studentId: 'SV004',
-              academicYear: 'K20',
-              field: 'App' as const,
-              isUP: true
-            },
-            {
-              id: '5',
-              name: 'Hoàng Văn E',
-              email: 'hoangvane@test.com',
-              role: 'member' as const,
-              status: 'active' as const,
-              joinedDate: '2024-01-25',
-              gender: 'Nam' as const,
-              birthday: '2003-04-18',
-              studentId: 'SV005',
-              academicYear: 'K22',
-              field: 'App' as const
-            }
-          ]
-        }
-      ];
-
-      // Filter teams based on manager's managed team
-      let filteredTeams = allTeams;
-      if (managedTeam && managedTeam !== 'all') {
-        filteredTeams = allTeams.filter(team => team.teamType === managedTeam);
-      }
-
-      setTeams(filteredTeams);
-      setIsLoading(false);
-    }, 1000);
-  }, [managedTeam]);
-
-  const handleAddMember = () => {
+  const handleAddMember = async () => {
     if (newMemberName.trim() && newMemberEmail.trim() && teams.length > 0) {
-      const newMember: TeamMember = {
-        id: Date.now().toString(),
-        name: newMemberName,
-        email: newMemberEmail,
-        role: 'member',
-        status: 'active',
-        joinedDate: new Date().toISOString().split('T')[0],
-        gender: newMemberGender,
-        birthday: newMemberBirthday,
-        studentId: newMemberStudentId,
-        academicYear: newMemberAcademicYear,
-        field: newMemberField,
-        isUP: newMemberIsUP
-      };
+      try {
+        const response = await fetch(`/api/team_leader/teams/${teams[0].id}/members`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: newMemberName,
+            email: newMemberEmail,
+            gender: newMemberGender,
+            birthday: newMemberBirthday,
+            studentId: newMemberStudentId,
+            academicYear: newMemberAcademicYear,
+            field: newMemberField,
+            isUP: newMemberIsUP
+          }),
+        });
 
-      setTeams(prev => prev.map(team => 
-        team.id === teams[0].id 
-          ? { ...team, members: [...team.members, newMember] }
-          : team
-      ));
+        const data = await response.json();
 
-      setNewMemberName('');
-      setNewMemberEmail('');
-      setNewMemberGender('Nam');
-      setNewMemberBirthday('');
-      setNewMemberStudentId('');
-      setNewMemberAcademicYear('');
-      setNewMemberField('Web');
-      setNewMemberIsUP(false);
-      setShowAddMemberModal(false);
+        if (data.success) {
+          // Thêm member mới vào state
+          setTeams(prev => prev.map(team => 
+            team.id === teams[0].id 
+              ? { ...team, members: [...team.members, data.data] }
+              : team
+          ));
+
+          // Reset form
+          setNewMemberName('');
+          setNewMemberEmail('');
+          setNewMemberGender('Nam');
+          setNewMemberBirthday('');
+          setNewMemberStudentId('');
+          setNewMemberAcademicYear('');
+          setNewMemberField('Web');
+          setNewMemberIsUP(false);
+          setShowAddMemberModal(false);
+        } else {
+          alert(data.error || 'Có lỗi xảy ra khi thêm thành viên');
+        }
+      } catch (error) {
+        console.error('Error adding member:', error);
+        alert('Có lỗi xảy ra khi thêm thành viên');
+      }
     }
   };
 
   // Filter and search function for members
   const filterMembers = (members: TeamMember[]) => {
-    return members.filter(member => {
+    // Hàm để xác định thứ tự ưu tiên của vai trò
+    const getRolePriority = (role: string) => {
+      switch (role) {
+        case 'admin': return 3;
+        case 'manager': return 2;
+        case 'member': return 1;
+        default: return 0;
+      }
+    };
+
+    // Loại bỏ trùng lặp và ưu tiên vai trò cao hơn
+    const uniqueMembers: { [key: string]: TeamMember } = {};
+    
+    members.forEach(member => {
+      const existingMember = uniqueMembers[member.email];
+      if (!existingMember || getRolePriority(member.role) > getRolePriority(existingMember.role)) {
+        uniqueMembers[member.email] = member;
+      }
+    });
+
+    const deduplicatedMembers = Object.values(uniqueMembers);
+
+    return deduplicatedMembers.filter(member => {
       const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            member.studentId.toLowerCase().includes(searchTerm.toLowerCase());
@@ -286,12 +258,30 @@ const ManagerTeamsPage: React.FC = () => {
     });
   };
 
-  const handleRemoveMember = (memberId: string) => {
-    setTeams(prev => prev.map(team => 
-      team.id === teams[0].id 
-        ? { ...team, members: team.members.filter(member => member.id !== memberId) }
-        : team
-    ));
+  const handleRemoveMember = async (memberId: string) => {
+    if (teams.length > 0) {
+      try {
+        const response = await fetch(`/api/team_leader/teams/${teams[0].id}/members?memberId=${memberId}`, {
+          method: 'DELETE',
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Xóa member khỏi state
+          setTeams(prev => prev.map(team => 
+            team.id === teams[0].id 
+              ? { ...team, members: team.members.filter(member => member.id !== memberId) }
+              : team
+          ));
+        } else {
+          alert(data.error || 'Có lỗi xảy ra khi xóa thành viên');
+        }
+      } catch (error) {
+        console.error('Error removing member:', error);
+        alert('Có lỗi xảy ra khi xóa thành viên');
+      }
+    }
   };
 
   const getRoleColor = (role: string) => {
@@ -314,7 +304,7 @@ const ManagerTeamsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <MainLayout userRole="manager">
+      <MainLayout userRole="team_leader">
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin"></div>
         </div>
@@ -324,7 +314,7 @@ const ManagerTeamsPage: React.FC = () => {
 
   if (teams.length === 0) {
     return (
-      <MainLayout userRole="manager">
+      <MainLayout userRole="team_leader">
         <div className="text-center py-12">
           <div className="text-gray-400 text-6xl mb-4">👥</div>
           <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-2">
@@ -339,7 +329,7 @@ const ManagerTeamsPage: React.FC = () => {
   }
 
   return (
-    <MainLayout userRole="manager">
+    <MainLayout userRole="team_leader">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex justify-between items-center">
@@ -437,7 +427,10 @@ const ManagerTeamsPage: React.FC = () => {
         <div className="section-neumorphic p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-              Danh sách thành viên ({filterMembers(teams[0].members).length}/{teams[0].members.length})
+              Danh sách thành viên ({(() => {
+                const filteredMembers = filterMembers(teams[0].members);
+                return filteredMembers.length;
+              })()})
             </h3>
             <button 
               onClick={() => setShowAddMemberModal(true)}
@@ -463,8 +456,8 @@ const ManagerTeamsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filterMembers(teams[0].members).map((member) => (
-                  <tr key={member.id} className="hover:bg-gray-50 transition-colors duration-200">
+                {filterMembers(teams[0].members).map((member, index) => (
+                  <tr key={`${member.id}-${index}`} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="px-4 py-3">
                       <div className="flex items-center space-x-3">
                         {member.isUP ? (

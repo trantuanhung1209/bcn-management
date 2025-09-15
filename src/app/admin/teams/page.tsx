@@ -105,11 +105,16 @@ interface Team {
 const AdminTeamsPage: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [newTeamName, setNewTeamName] = useState('');
   const [newTeamDescription, setNewTeamDescription] = useState('');
   const [newTeamType, setNewTeamType] = useState<'Web' | 'App'>('Web');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Fetch teams from API
   const fetchTeams = async () => {
@@ -191,12 +196,103 @@ const AdminTeamsPage: React.FC = () => {
         setNewTeamDescription('');
         setNewTeamType('Web');
         setIsCreateModalOpen(false);
+        setSuccessMessage('Team đã được tạo thành công!');
+        setTimeout(() => setSuccessMessage(null), 3000);
       } else {
         alert(data.error || 'Failed to create team');
       }
     } catch (error) {
       console.error('Error creating team:', error);
       alert('An error occurred while creating the team');
+    }
+  };
+
+  const handleEditTeam = (team: Team) => {
+    setEditingTeam(team);
+    setNewTeamName(team.name);
+    setNewTeamDescription(team.description);
+    setNewTeamType(team.teamType as 'Web' | 'App');
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateTeam = async () => {
+    if (!editingTeam || !newTeamName.trim()) {
+      alert('Vui lòng nhập tên team');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/teams/${editingTeam.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newTeamName,
+          description: newTeamDescription,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update team in the list
+        setTeams(prev => prev.map(team => 
+          team.id === editingTeam.id 
+            ? {
+                ...team,
+                name: newTeamName,
+                description: newTeamDescription,
+                teamType: newTeamType,
+                color: newTeamType === 'Web' ? 'from-blue-500 to-cyan-500' : 'from-green-500 to-emerald-500'
+              }
+            : team
+        ));
+        
+        setNewTeamName('');
+        setNewTeamDescription('');
+        setNewTeamType('Web');
+        setIsEditModalOpen(false);
+        setEditingTeam(null);
+        setSuccessMessage('Team đã được cập nhật thành công!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        alert(data.error || 'Failed to update team');
+      }
+    } catch (error) {
+      console.error('Error updating team:', error);
+      alert('An error occurred while updating the team');
+    }
+  };
+
+  const handleDeleteTeam = (team: Team) => {
+    setDeletingTeam(team);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDeleteTeam = async () => {
+    if (!deletingTeam) return;
+
+    try {
+      const response = await fetch(`/api/teams/${deletingTeam.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Remove team from the list
+        setTeams(prev => prev.filter(team => team.id !== deletingTeam.id));
+        setIsDeleteModalOpen(false);
+        setDeletingTeam(null);
+        setSuccessMessage('Team đã được xóa thành công!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        alert(data.error || 'Failed to delete team');
+      }
+    } catch (error) {
+      console.error('Error deleting team:', error);
+      alert('An error occurred while deleting the team');
     }
   };
 
@@ -231,6 +327,32 @@ const AdminTeamsPage: React.FC = () => {
   return (
     <MainLayout userRole="admin">
       <div className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fade-in">
+            <div className="flex items-center space-x-2">
+              <span>✅</span>
+              <span>{successMessage}</span>
+            </div>
+            <style jsx>{`
+              @keyframes fadeIn {
+                0% {
+                  opacity: 0;
+                  transform: translateY(-20px);
+                }
+                100% {
+                  opacity: 1;
+                  transform: translateY(0);
+                }
+              }
+              
+              .animate-fade-in {
+                animation: fadeIn 0.3s ease-out forwards;
+              }
+            `}</style>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
@@ -335,8 +457,36 @@ const AdminTeamsPage: React.FC = () => {
           {teams.map((team) => (
             <div
               key={team.id}
-              className="section-neumorphic p-6 hover:shadow-lg transition-all duration-300 cursor-pointer"
+              className="section-neumorphic p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group relative"
             >
+              {/* Action Buttons */}
+              <div className="absolute top-4 right-4 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditTeam(team);
+                  }}
+                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                  title="Chỉnh sửa"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTeam(team);
+                  }}
+                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                  title="Xóa"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+
               {/* Team Header */}
               <div className="flex items-center space-x-3 mb-4">
                 <div className={`w-12 h-12 bg-gradient-to-r ${team.color} rounded-xl flex items-center justify-center`}>
@@ -363,22 +513,30 @@ const AdminTeamsPage: React.FC = () => {
               <div className="flex items-center space-x-2 mb-4">
                 <span className="text-[var(--color-text-secondary)] text-xs">Thành viên:</span>
                 <div className="flex -space-x-2">
-                  {team.members.slice(0, 3).map((member) => (
-                    <div key={member.id} title={member.name}>
-                      {member.isUP ? (
-                        <UPAvatar name={member.name} className="border-2 border-white" />
-                      ) : (
-                        <RegularAvatar 
-                          name={member.name} 
-                          className="border-2 border-white" 
-                        />
+                  {team.members.length === 0 ? (
+                    <div className="text-[var(--color-text-secondary)] text-xs italic">
+                      Chưa có thành viên
+                    </div>
+                  ) : (
+                    <>
+                      {team.members.slice(0, 3).map((member) => (
+                        <div key={member.id} title={member.name}>
+                          {member.isUP ? (
+                            <UPAvatar name={member.name} className="border-2 border-white" />
+                          ) : (
+                            <RegularAvatar 
+                              name={member.name} 
+                              className="border-2 border-white" 
+                            />
+                          )}
+                        </div>
+                      ))}
+                      {team.members.length > 3 && (
+                        <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-xs font-bold border-2 border-white">
+                          +{team.members.length - 3}
+                        </div>
                       )}
-                    </div>
-                  ))}
-                  {team.members.length > 3 && (
-                    <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-gray-600 text-xs font-bold border-2 border-white">
-                      +{team.members.length - 3}
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -472,6 +630,123 @@ const AdminTeamsPage: React.FC = () => {
                 >
                   Tạo Team
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Team Modal */}
+        {isEditModalOpen && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-[var(--color-background)] rounded-2xl p-6 w-full max-w-md section-neumorphic">
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4">
+                Chỉnh Sửa Team
+              </h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    Tên team
+                  </label>
+                  <input
+                    type="text"
+                    value={newTeamName}
+                    onChange={(e) => setNewTeamName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
+                    style={{
+                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
+                    }}
+                    placeholder="Nhập tên team"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    Loại team
+                  </label>
+                  <select
+                    value={newTeamType}
+                    onChange={(e) => setNewTeamType(e.target.value as 'Web' | 'App')}
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
+                    style={{
+                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
+                    }}
+                  >
+                    <option value="Web">Web Development</option>
+                    <option value="App">Mobile App Development</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    Mô tả
+                  </label>
+                  <textarea
+                    value={newTeamDescription}
+                    onChange={(e) => setNewTeamDescription(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner resize-none"
+                    style={{
+                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
+                    }}
+                    rows={3}
+                    placeholder="Nhập mô tả team"
+                  />
+                </div>
+              </div>
+
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingTeam(null);
+                  }}
+                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={handleUpdateTeam}
+                  className="flex-1 neumorphic-button"
+                >
+                  Cập Nhật
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {isDeleteModalOpen && deletingTeam && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-[var(--color-background)] rounded-2xl p-6 w-full max-w-md section-neumorphic">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-red-600 text-2xl">⚠️</span>
+                </div>
+                <h3 className="text-lg font-bold text-[var(--color-text-primary)] mb-2">
+                  Xác nhận xóa team
+                </h3>
+                <p className="text-[var(--color-text-secondary)] mb-6">
+                  Bạn có chắc chắn muốn xóa team &quot;{deletingTeam.name}&quot;? 
+                  Hành động này sẽ chuyển team vào thùng rác và có thể khôi phục sau.
+                </p>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => {
+                      setIsDeleteModalOpen(false);
+                      setDeletingTeam(null);
+                    }}
+                    className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    onClick={confirmDeleteTeam}
+                    className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors duration-200"
+                  >
+                    Xóa Team
+                  </button>
+                </div>
               </div>
             </div>
           </div>

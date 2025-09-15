@@ -9,10 +9,12 @@ const DashboardRedirectPage: React.FC = () => {
   useEffect(() => {
     // Get user role from localStorage and redirect to appropriate dashboard
     if (typeof window !== 'undefined') {
-      const userRole = localStorage.getItem('userRole') as 'admin' | 'manager' | 'member';
+      const userRole = localStorage.getItem('userRole') as 'admin' | 'team_leader' | 'member';
       
       if (userRole) {
-        router.push(`/${userRole}/dashboard`);
+        // Map team_leader to its own path
+        const dashboardPath = userRole === 'team_leader' ? 'team_leader' : userRole;
+        router.push(`/${dashboardPath}/dashboard`);
       } else {
         // No role found, redirect to login
         router.push('/auth/login');

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import MainLayout from '../../../components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
 import { useRouter } from 'next/navigation';
 
 interface Activity {
@@ -55,9 +55,17 @@ const ManagerDashboardPage: React.FC = () => {
     // Get user data from localStorage
     if (typeof window !== 'undefined') {
       const userData = localStorage.getItem('userData');
-      const storedUserName = localStorage.getItem('userName') || 'Manager';
+      const storedUserName = localStorage.getItem('userName') || 'Team Leader';
+      const storedUserId = localStorage.getItem('userId');
       
-      if (userData) {
+      console.log('Debug - userData:', userData);
+      console.log('Debug - storedUserId:', storedUserId);
+      console.log('Debug - storedUserName:', storedUserName);
+      
+      if (storedUserId) {
+        setUserId(storedUserId);
+        setUserName(storedUserName);
+      } else if (userData) {
         try {
           const parsedData = JSON.parse(userData);
           setUserId(parsedData.id);
@@ -75,88 +83,140 @@ const ManagerDashboardPage: React.FC = () => {
     }
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch manager stats from API
+  // Fetch team leader stats from API
   const fetchStats = async () => {
     setIsLoading(true);
+    console.log('Debug - fetchStats userId:', userId);
     try {
-      const response = await fetch(`/api/manager/dashboard?userId=${userId}`);
+      const response = await fetch(`/api/team_leader/dashboard?userId=${userId}`);
       const result = await response.json();
       
-      if (result.success) {
-        setStats(result.data);
+      console.log('Debug - API response:', result);
+      
+      if (result.success && result.data) {
+        // Adjust member count to not include team leader
+        const adjustedStats = {
+          ...result.data,
+          totalMembers: Math.max(0, result.data.totalMembers - result.data.totalTeams), // Subtract team leaders from total
+          teams: result.data.teams.map((team: TeamDetail) => ({
+            ...team,
+            memberCount: Math.max(0, team.memberCount - 1) // Subtract team leader from each team
+          }))
+        };
+        setStats(adjustedStats);
       } else {
         console.error('Error fetching stats:', result.error);
-        // Fallback to mock data if API fails
-        setStats({
-          totalTeams: 1, // Chỉ 1 team cho Web Manager
-          totalMembers: 6,
-          totalProjects: 4,
-          activeProjects: 2,
-          completedProjects: 2,
-          webTeams: 1,
-          appTeams: 0, // Web Manager không quản lý app team
-          teams: [
-            {
-              _id: '1',
-              name: 'Web Development Team',
-              memberCount: 6,
-              projectCount: 4,
-              activeProjects: 2,
-              completedProjects: 2,
-              progress: 75
-            }
-          ],
-          recentActivities: [
-            {
-              action: 'Cập nhật project status',
-              details: 'Dự án Website thay đổi thành testing',
-              time: '1 giờ trước',
-              icon: '🔄',
-              type: 'project'
-            },
-            {
-              action: 'Thêm thành viên mới',
-              details: 'Thêm developer vào team Web',
-              time: '3 giờ trước',
-              icon: '👥',
-              type: 'team'
-            },
-            {
-              action: 'Tạo task mới',
-              details: 'Phân công task UI design cho team Web',
-              time: '5 giờ trước',
-              icon: '✨',
-              type: 'task'
-            }
-          ]
-        });
+        
+        // Only use mock data if API completely fails
+        const mockStats = getMockStatsForUser(userId, userName);
+        setStats(mockStats);
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Fallback to mock data
-      setStats({
+      
+      // Only use mock data if API completely fails
+      const mockStats = getMockStatsForUser(userId, userName);
+      setStats(mockStats);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Generate mock stats based on user
+  const getMockStatsForUser = (userId: string, userName: string) => {
+    // Check if this is Web Team Leader (based on name or could be from localStorage)
+    const isWebTeamLeader = userName.toLowerCase().includes('web') || 
+                           localStorage.getItem('managedTeam') === 'web';
+    
+    if (isWebTeamLeader) {
+      return {
         totalTeams: 1,
-        totalMembers: 6,
-        totalProjects: 4,
+        totalMembers: 3, // chỉ members, không tính leader
+        totalProjects: 3,
         activeProjects: 2,
-        completedProjects: 2,
+        completedProjects: 1,
         webTeams: 1,
         appTeams: 0,
         teams: [
           {
-            _id: '1',
-            name: 'Web Development Team',
-            memberCount: 6,
-            projectCount: 4,
+            _id: '68c308fef49db92cbacf180a',
+            name: 'Team Web Development',
+            memberCount: 3,
+            projectCount: 3,
             activeProjects: 2,
-            completedProjects: 2,
-            progress: 75
+            completedProjects: 1,
+            progress: 65
           }
         ],
-        recentActivities: []
-      });
-    } finally {
-      setIsLoading(false);
+        recentActivities: [
+          {
+            action: 'Cập nhật project status',
+            details: 'Dự án Website BCN chuyển sang giai đoạn testing',
+            time: '2 giờ trước',
+            icon: '🔄',
+            type: 'project'
+          },
+          {
+            action: 'Review code',
+            details: 'Đã review và approve pull request #45 cho tính năng login',
+            time: '4 giờ trước',
+            icon: '�',
+            type: 'review'
+          },
+          {
+            action: 'Phân công task',
+            details: 'Giao task "Tối ưu performance" cho Nguyễn Văn A',
+            time: '1 ngày trước',
+            icon: '📋',
+            type: 'task'
+          }
+        ]
+      };
+    } else {
+      // App Team Leader
+      return {
+        totalTeams: 1,
+        totalMembers: 1, // chỉ members, không tính leader
+        totalProjects: 2,
+        activeProjects: 1,
+        completedProjects: 1,
+        webTeams: 0,
+        appTeams: 1,
+        teams: [
+          {
+            _id: '68c308fef49db92cbacf180c',
+            name: 'Team Mobile Development',
+            memberCount: 1,
+            projectCount: 2,
+            activeProjects: 1,
+            completedProjects: 1,
+            progress: 50
+          }
+        ],
+        recentActivities: [
+          {
+            action: 'Deploy app',
+            details: 'App BCN Mobile v1.2 đã được deploy lên store',
+            time: '1 giờ trước',
+            icon: '🚀',
+            type: 'deploy'
+          },
+          {
+            action: 'Bug fix',
+            details: 'Sửa lỗi crash khi load danh sách sản phẩm',
+            time: '6 giờ trước',
+            icon: '🐛',
+            type: 'fix'
+          },
+          {
+            action: 'Feature complete',
+            details: 'Hoàn thành tính năng push notification',
+            time: '2 ngày trước',
+            icon: '✅',
+            type: 'feature'
+          }
+        ]
+      };
     }
   };
 
@@ -164,69 +224,93 @@ const ManagerDashboardPage: React.FC = () => {
   const fetchAllActivities = async () => {
     setLoadingActivities(true);
     try {
-      // Mock detailed activities for now
-      const mockActivities = [
-        {
-          action: 'Cập nhật project status',
-          details: 'Dự án Website BCN thay đổi từ in_progress thành testing',
-          time: '1 giờ trước',
-          icon: '🔄',
-          type: 'project'
-        },
-        {
-          action: 'Thêm thành viên mới',
-          details: 'Nguyễn Văn B được thêm vào team App Development',
-          time: '3 giờ trước',
-          icon: '👥',
-          type: 'team'
-        },
-        {
-          action: 'Tạo task mới',
-          details: 'Tạo task "Thiết kế UI trang chủ" cho team Web',
-          time: '5 giờ trước',
-          icon: '✨',
-          type: 'task'
-        },
-        {
-          action: 'Hoàn thành project',
-          details: 'Dự án Mobile App BCN đã hoàn thành',
-          time: '1 ngày trước',
-          icon: '🎯',
-          type: 'project'
-        },
-        {
-          action: 'Review code',
-          details: 'Đã review và approve pull request #123',
-          time: '1 ngày trước',
-          icon: '👀',
-          type: 'review'
-        },
-        {
-          action: 'Tạo sprint mới',
-          details: 'Khởi tạo Sprint 5 cho team Web Development',
-          time: '2 ngày trước',
-          icon: '🚀',
-          type: 'sprint'
-        },
-        {
-          action: 'Cập nhật timeline',
-          details: 'Điều chỉnh deadline cho dự án E-commerce',
-          time: '3 ngày trước',
-          icon: '📅',
-          type: 'project'
-        }
-      ];
+      const response = await fetch(`/api/team_leader/dashboard?userId=${userId}`);
+      const result = await response.json();
       
-      // Simulate API delay
-      setTimeout(() => {
+      if (result.success && result.data.recentActivities) {
+        // Update activities from API
+        setStats(prev => ({
+          ...prev,
+          recentActivities: result.data.recentActivities
+        }));
+      } else {
+        // Fallback to mock detailed activities
+        const mockActivities = [
+          {
+            action: 'Cập nhật project status',
+            details: 'Dự án Website BCN thay đổi từ in_progress thành testing',
+            time: '1 giờ trước',
+            icon: '🔄',
+            type: 'project'
+          },
+          {
+            action: 'Thêm thành viên mới',
+            details: 'Thành viên mới được thêm vào team',
+            time: '3 giờ trước',
+            icon: '👥',
+            type: 'team'
+          },
+          {
+            action: 'Tạo task mới',
+            details: 'Tạo task "Thiết kế UI trang chủ" cho team',
+            time: '5 giờ trước',
+            icon: '✨',
+            type: 'task'
+          },
+          {
+            action: 'Hoàn thành project',
+            details: 'Dự án đã hoàn thành và deploy thành công',
+            time: '1 ngày trước',
+            icon: '🎯',
+            type: 'project'
+          },
+          {
+            action: 'Review code',
+            details: 'Đã review và approve pull request',
+            time: '1 ngày trước',
+            icon: '👀',
+            type: 'review'
+          },
+          {
+            action: 'Tạo sprint mới',
+            details: 'Khởi tạo sprint mới cho team',
+            time: '2 ngày trước',
+            icon: '🚀',
+            type: 'sprint'
+          },
+          {
+            action: 'Cập nhật timeline',
+            details: 'Điều chỉnh deadline cho dự án',
+            time: '3 ngày trước',
+            icon: '📅',
+            type: 'project'
+          }
+        ];
+        
         setStats(prev => ({
           ...prev,
           recentActivities: mockActivities
         }));
-        setLoadingActivities(false);
-      }, 500);
+      }
     } catch (error) {
       console.error('Error fetching activity logs:', error);
+      
+      // Fallback to mock data
+      const mockActivities = [
+        {
+          action: 'Hoạt động không thể tải',
+          details: 'Không thể kết nối với server để lấy hoạt động',
+          time: 'Vài phút trước',
+          icon: '⚠️',
+          type: 'error'
+        }
+      ];
+      
+      setStats(prev => ({
+        ...prev,
+        recentActivities: mockActivities
+      }));
+    } finally {
       setLoadingActivities(false);
     }
   };
@@ -431,21 +515,21 @@ const ManagerDashboardPage: React.FC = () => {
                   description: 'Xem và điều chỉnh cấu trúc teams',
                   color: 'from-green-500 to-emerald-500',
                   icon: '🏢',
-                  href: '/manager/teams'
+                  href: '/team_leader/teams'
                 },
                 {
                   name: 'Quản lý Projects',
                   description: 'Theo dõi tiến độ các dự án',
                   color: 'from-purple-500 to-pink-500',
                   icon: '📊',
-                  href: '/manager/projects'
+                  href: '/team_leader/projects'
                 },
                 {
                   name: 'Quản lý Members',
                   description: 'Phân công và đánh giá thành viên',
                   color: 'from-blue-500 to-cyan-500',
                   icon: '👥',
-                  href: '/manager/members'
+                  href: '/team_leader/members'
                 }
               ].map((item, index) => (
                 <div key={index} className="flex items-center space-x-3 p-3 bg-white rounded-lg hover:shadow-md transition-shadow duration-200 cursor-pointer">

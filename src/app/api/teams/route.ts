@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TeamModel } from '@/models/Team';
 import { UserModel } from '@/models/User';
 import { ObjectId } from 'mongodb';
+import { filterTeamsForManager } from '@/lib/server-utils';
 
-// GET - Lấy danh sách teams
+// GET - Lấy danh sách teams với phân quyền theo manager
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -13,6 +14,10 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const withMembers = searchParams.get('withMembers') === 'true';
+    
+    // Lấy thông tin user từ query params hoặc headers để xác định quyền
+    const userId = searchParams.get('userId');
+    const userRole = searchParams.get('userRole');
 
     const filters: any = {};
     
@@ -24,7 +29,13 @@ export async function GET(request: NextRequest) {
     filters.page = page;
     filters.limit = limit;
 
-    const { teams, total } = await TeamModel.findAll(filters);
+    let { teams, total } = await TeamModel.findAll(filters);
+
+    // Áp dụng phân quyền theo team cho manager
+    if (userId && userRole && userRole === 'manager') {
+      teams = await filterTeamsForManager(userId, userRole, teams);
+      total = teams.length; // Cập nhật lại total sau khi filter
+    }
 
     // Nếu cần thông tin members chi tiết
     if (withMembers) {

@@ -1,6 +1,9 @@
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { ObjectId } from "mongodb"
+import { UserModel } from "@/models/User"
+import { TeamModel } from "@/models/Team"
+import { ProjectModel } from "@/models/Project"
 
 // Password hashing
 export const hashPassword = async (password: string): Promise<string> => {
@@ -56,4 +59,113 @@ export const errorResponse = (message: string, error?: string) => {
     message,
     error
   };
+}
+
+// Team-based access control for managers
+export const getManagerTeams = async (managerId: string): Promise<ObjectId[]> => {
+  const manager = await UserModel.findById(managerId);
+  if (!manager) return [];
+  
+  // Get teams where user is manager (team leader) or member
+  const userTeams = await TeamModel.findByUser(managerId);
+  return userTeams.map(team => team._id!);
+}
+
+export const canManagerAccessTeam = async (managerId: string, targetTeamId: string, userRole: string): Promise<boolean> => {
+  // Admin can access everything
+  if (userRole === 'admin') return true;
+  
+  // Team leader can only access teams they manage or belong to
+  if (userRole === 'team_leader') {
+    const managerTeams = await getManagerTeams(managerId);
+    return managerTeams.some(teamId => teamId.toString() === targetTeamId);
+  }
+  
+  return false;
+}
+
+export const canManagerAccessUser = async (managerId: string, targetUserId: string, userRole: string): Promise<boolean> => {
+  // Admin can access everything
+  if (userRole === 'admin') return true;
+  
+  // Team leader can access themselves
+  if (managerId === targetUserId) return true;
+  
+  // Team leader can access users in their teams
+  if (userRole === 'team_leader') {
+    const managerTeams = await getManagerTeams(managerId);
+    const targetUser = await UserModel.findById(targetUserId);
+    
+    if (!targetUser) return false;
+    
+    // Check if target user belongs to any of manager's teams
+    return targetUser.teams.some(userTeamId => 
+      managerTeams.some(managerTeamId => managerTeamId.toString() === userTeamId.toString())
+    );
+  }
+  
+  return false;
+}
+
+export const canManagerAccessProject = async (managerId: string, projectId: string, userRole: string): Promise<boolean> => {
+  // Admin can access everything
+  if (userRole === 'admin') return true;
+  
+  // Team leader can only access projects from their teams
+  if (userRole === 'team_leader') {
+    const project = await ProjectModel.findById(projectId);
+    if (!project) return false;
+    
+    const managerTeams = await getManagerTeams(managerId);
+    return managerTeams.some(teamId => teamId.toString() === project.team.toString());
+  }
+  
+  return false;
+}
+
+// Filter data based on manager's team access
+export const filterTeamsForManager = async (managerId: string, userRole: string, teams: any[]): Promise<any[]> => {
+  if (userRole === 'admin') return teams;
+  
+  if (userRole === 'team_leader') {
+    const managerTeams = await getManagerTeams(managerId);
+    const managerTeamIds = managerTeams.map(id => id.toString());
+    
+    return teams.filter(team => managerTeamIds.includes(team._id.toString()));
+  }
+  
+  return [];
+}
+
+export const filterUsersForManager = async (managerId: string, userRole: string, users: any[]): Promise<any[]> => {
+  if (userRole === 'admin') return users;
+  
+  if (userRole === 'team_leader') {
+    const managerTeams = await getManagerTeams(managerId);
+    const managerTeamIds = managerTeams.map(id => id.toString());
+    
+    return users.filter(user => 
+      user._id.toString() === managerId || // Manager can see themselves
+      user.teams.some((userTeamId: ObjectId) => 
+        managerTeamIds.includes(userTeamId.toString())
+      )
+    );
+  }
+  
+  return [];
+}
+
+export const filterProjectsForManager = async (managerId: string, userRole: string, projects: any[]): Promise<any[]> => {
+  if (userRole === 'admin') return projects;
+  
+  if (userRole === 'team_leader') {
+    const managerTeams = await getManagerTeams(managerId);
+    const managerTeamIds = managerTeams.map(id => id.toString());
+    
+    return projects.filter(project => 
+      managerTeamIds.includes(project.team.toString())
+    );
+  }
+  
+  return [];
 }

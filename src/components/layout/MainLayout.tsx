@@ -7,7 +7,7 @@ import LogoutConfirmModal from '@/components/ui/LogoutConfirmModal';
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  userRole?: 'admin' | 'manager' | 'member';
+  userRole?: 'admin' | 'team_leader' | 'member';
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole }) => {
@@ -15,7 +15,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole }) => {
   const pathname = usePathname();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [detectedRole, setDetectedRole] = useState<'admin' | 'manager' | 'member'>('member');
+  const [detectedRole, setDetectedRole] = useState<'admin' | 'team_leader' | 'member'>('member');
 
   // Detect role from URL path or localStorage
   useEffect(() => {
@@ -30,10 +30,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole }) => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('userRole', 'admin');
       }
-    } else if (pathname.startsWith('/manager')) {
-      setDetectedRole('manager');
+    } else if (pathname.startsWith('/team_leader')) {
+      setDetectedRole('team_leader');
       if (typeof window !== 'undefined') {
-        localStorage.setItem('userRole', 'manager');
+        localStorage.setItem('userRole', 'team_leader');
       }
     } else if (pathname.startsWith('/member')) {
       setDetectedRole('member');
@@ -43,9 +43,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole }) => {
     } else {
       // Try to get from localStorage
       if (typeof window !== 'undefined') {
-        const storedRole = localStorage.getItem('userRole') as 'admin' | 'manager' | 'member';
+        const storedRole = localStorage.getItem('userRole');
         if (storedRole) {
-          setDetectedRole(storedRole);
+          // Convert old 'manager' role to 'team_leader'
+          const normalizedRole = storedRole === 'manager' ? 'team_leader' : storedRole;
+          if (normalizedRole === 'admin' || normalizedRole === 'team_leader' || normalizedRole === 'member') {
+            setDetectedRole(normalizedRole);
+          }
         }
       }
     }
