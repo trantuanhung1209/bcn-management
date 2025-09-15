@@ -352,15 +352,25 @@ export class TeamModel {
     // Get team leader
     const teamLeader = await usersCollection.findOne({ _id: team.teamLeader });
     
-    // Get all members
+    // Get all members excluding team leader to avoid duplicates
     const members = await usersCollection.find({
-      _id: { $in: team.members }
+      _id: { 
+        $in: team.members,
+        $ne: team.teamLeader // Exclude team leader from members list
+      }
     }).toArray();
     
-    return [
-      { ...teamLeader, isTeamLeader: true },
-      ...members.map(member => ({ ...member, isTeamLeader: false }))
-    ];
+    const result = [];
+    
+    // Add team leader first
+    if (teamLeader) {
+      result.push({ ...teamLeader, isTeamLeader: true });
+    }
+    
+    // Add other members
+    result.push(...members.map(member => ({ ...member, isTeamLeader: false })));
+    
+    return result;
   }
   
   // Get teams by user
@@ -382,6 +392,20 @@ export class TeamModel {
         }
       ]
     }).toArray();
+  }
+  
+  // Find team by leader
+  static async findByLeader(leaderId: string | ObjectId): Promise<Team | null> {
+    const collection = await getTeamsCollection();
+    const leaderObjectId = typeof leaderId === 'string' ? new ObjectId(leaderId) : leaderId;
+    
+    return await collection.findOne({
+      teamLeader: leaderObjectId,
+      $or: [
+        { isActive: true },
+        { isActive: { $exists: false } }
+      ]
+    });
   }
   
   // Remove user from all teams (for permanent user deletion)

@@ -80,6 +80,7 @@ export interface Project {
   status: ProjectStatus;
   priority: TaskPriority;
   team: ObjectId;
+  manager?: ObjectId; // Manager của team được gán để quản lý project
   assignedTo: ObjectId[];
   startDate: Date;
   endDate?: Date;
@@ -89,7 +90,10 @@ export interface Project {
   tags: string[];
   attachments: string[];
   isActive: boolean;
-  createdBy: ObjectId;
+  isAssigned: boolean; // Admin đã gán cho team chưa, Manager đã nhận chưa
+  createdBy: ObjectId; // Admin tạo project
+  assignedAt?: Date; // Thời gian Admin gán cho team
+  acceptedAt?: Date; // Thời gian Manager nhận project
   createdAt: Date;
   updatedAt: Date;
 }
@@ -102,17 +106,19 @@ export interface Task {
   status: TaskStatus;
   priority: TaskPriority;
   project: ObjectId;
-  assignedTo: ObjectId;
-  createdBy: ObjectId;
+  assignedTo: ObjectId; // Member được gán
+  createdBy: ObjectId; // Manager tạo task
   estimatedHours?: number;
   actualHours?: number;
   startDate?: Date;
   dueDate?: Date;
   completedAt?: Date;
+  progress: number; // 0-100, Member tự cập nhật
   tags: string[];
   comments: Comment[];
   attachments: string[];
   dependencies: ObjectId[]; // other tasks this depends on
+  isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

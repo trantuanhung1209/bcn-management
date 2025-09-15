@@ -161,13 +161,13 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
 
       {/* Navigation */}
       <nav className="space-y-2">
-        {filteredItems.map((item, index) => {
+        {filteredItems.map((item) => {
           // Check if current page is active
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
           
           return (
             <Link
-              key={index}
+              key={item.href}
               href={item.href}
               className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 isActive 

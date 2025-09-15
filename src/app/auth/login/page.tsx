@@ -46,13 +46,38 @@ const LoginPage: React.FC = () => {
       if (result.success && result.data) {
         const { user, token } = result.data;
         
-        // Save auth data to localStorage
+        console.log('Login successful, user:', user);
+        console.log('Login successful, token:', token);
+        
+        // Save auth data to localStorage with token included
         if (typeof window !== 'undefined') {
+          const userData = {
+            id: user._id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.role,
+            avatar: user.avatar,
+            token: token // Include token in userData object
+          };
+          
+          console.log('Saving userData to localStorage:', userData);
+          localStorage.setItem('userData', JSON.stringify(userData));
+          
+          // Also save individual items for backward compatibility
           localStorage.setItem('authToken', token);
           localStorage.setItem('userRole', user.role);
           localStorage.setItem('userName', `${user.firstName} ${user.lastName}`);
           localStorage.setItem('userId', user._id);
           localStorage.setItem('userEmail', user.email);
+          
+          // Set auth cookie for server-side authentication
+          document.cookie = `auth-token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+          
+          // Verify it was saved
+          console.log('Verification - userData from localStorage:', localStorage.getItem('userData'));
+          console.log('Verification - authToken from localStorage:', localStorage.getItem('authToken'));
+          console.log('Verification - auth cookie set:', document.cookie.includes('auth-token'));
           
           // Set managed team based on user's field or teams
           if (user.role === 'admin') {
@@ -66,7 +91,20 @@ const LoginPage: React.FC = () => {
           }
         }
         
-        router.push('/dashboard');
+        // Redirect based on user role
+        switch (user.role) {
+          case 'admin':
+            router.push('/admin/dashboard');
+            break;
+          case 'team_leader':
+            router.push('/team_leader/dashboard');
+            break;
+          case 'member':
+            router.push('/member/dashboard');
+            break;
+          default:
+            router.push('/dashboard');
+        }
       } else {
         setError(result.error || 'Đăng nhập thất bại');
       }

@@ -5,6 +5,7 @@ export async function getAuthenticatedUserId(request: NextRequest): Promise<stri
   try {
     // Try to get token from Authorization header
     const authHeader = request.headers.get('authorization');
+    
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       const decoded = verifyToken(token);

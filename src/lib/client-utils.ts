@@ -4,6 +4,60 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
+// Authentication utilities
+export const getAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const userData = localStorage.getItem('userData') || sessionStorage.getItem('userData');
+    
+    if (userData) {
+      const parsedData = JSON.parse(userData);
+      return parsedData.token || null;
+    }
+    
+    // Fallback to direct authToken
+    const fallbackToken = localStorage.getItem('authToken');
+    return fallbackToken;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+  }
+  
+  return null;
+}
+
+export const getAuthHeaders = (): HeadersInit => {
+  const token = getAuthToken();
+  
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return headers;
+}
+
+export const apiRequest = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  const defaultOptions: RequestInit = {
+    headers: getAuthHeaders(),
+    credentials: 'include', // Include cookies in request
+    ...options,
+  };
+  
+  // Merge headers if provided
+  if (options.headers) {
+    defaultOptions.headers = {
+      ...defaultOptions.headers,
+      ...options.headers,
+    };
+  }
+  
+  return fetch(url, defaultOptions);
+}
+
 // Date formatting
 export const formatDate = (date: Date): string => {
   return new Intl.DateTimeFormat('vi-VN', {

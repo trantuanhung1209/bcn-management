@@ -6,6 +6,36 @@ interface Params {
   id: string;
 }
 
+// GET - Lấy danh sách thành viên của team
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<Params> }
+) {
+  try {
+    const { id } = await params;
+
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid team ID' },
+        { status: 400 }
+      );
+    }
+
+    const members = await TeamModel.getTeamMembers(id);
+
+    return NextResponse.json({
+      success: true,
+      data: members
+    });
+  } catch (error) {
+    console.error('Error fetching team members:', error);
+    return NextResponse.json(
+      { success: false, error: 'Failed to fetch team members' },
+      { status: 500 }
+    );
+  }
+}
+
 // POST - Thêm thành viên vào team
 export async function POST(
   request: NextRequest,

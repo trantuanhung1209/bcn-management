@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import MainLayout from '@/components/layout/MainLayout';
 
@@ -9,15 +9,15 @@ const PriorityBadge: React.FC<{ priority: 'low' | 'medium' | 'high' | 'urgent' }
   const getPriorityStyle = (priority: string) => {
     switch (priority) {
       case 'low':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200/60';
       case 'medium':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-700 border-yellow-200/60';
       case 'high':
-        return 'bg-orange-100 text-orange-800 border-orange-200';
+        return 'bg-gradient-to-r from-orange-50 to-red-50 text-orange-700 border-orange-200/60';
       case 'urgent':
-        return 'bg-red-100 text-red-800 border-red-200';
+        return 'bg-gradient-to-r from-red-50 to-pink-50 text-red-700 border-red-200/60';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-gray-200/60';
     }
   };
 
@@ -31,8 +31,19 @@ const PriorityBadge: React.FC<{ priority: 'low' | 'medium' | 'high' | 'urgent' }
     }
   };
 
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'low': return '🟢';
+      case 'medium': return '🟡';
+      case 'high': return '🟠';
+      case 'urgent': return '🔴';
+      default: return '⚪';
+    }
+  };
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getPriorityStyle(priority)}`}>
+    <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-1 ${getPriorityStyle(priority)}`}>
+      <span className="text-xs">{getPriorityIcon(priority)}</span>
       {getPriorityText(priority)}
     </span>
   );
@@ -43,17 +54,17 @@ const StatusBadge: React.FC<{ status: 'planning' | 'in_progress' | 'testing' | '
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'planning':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
+        return 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-200/60';
       case 'in_progress':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+        return 'bg-gradient-to-r from-yellow-50 to-amber-50 text-yellow-700 border-yellow-200/60';
       case 'testing':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
+        return 'bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 border-purple-200/60';
       case 'completed':
-        return 'bg-green-100 text-green-800 border-green-200';
+        return 'bg-gradient-to-r from-green-50 to-emerald-50 text-green-700 border-green-200/60';
       case 'on_hold':
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-gray-200/60';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gradient-to-r from-gray-50 to-gray-100 text-gray-700 border-gray-200/60';
     }
   };
 
@@ -68,8 +79,20 @@ const StatusBadge: React.FC<{ status: 'planning' | 'in_progress' | 'testing' | '
     }
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'planning': return '📋';
+      case 'in_progress': return '⚡';
+      case 'testing': return '🧪';
+      case 'completed': return '✅';
+      case 'on_hold': return '⏸️';
+      default: return '📄';
+    }
+  };
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusStyle(status)}`}>
+    <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center gap-1 ${getStatusStyle(status)}`}>
+      <span className="text-xs">{getStatusIcon(status)}</span>
       {getStatusText(status)}
     </span>
   );
@@ -95,20 +118,43 @@ interface Project {
   coins?: number;
   totalTasks: number;
   completedTasks: number;
+  isAssigned: boolean;
+  manager?: string;
+  managerName?: string;
+  assignedAt?: string;
+  acceptedAt?: string;
+}
+
+interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  teamLeader: string;
+  teamLeaderName: string;
+  memberCount: number;
 }
 
 const AdminProjectsPage: React.FC = () => {
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
+  const [filterAssignment, setFilterAssignment] = useState<string>('all'); // all, assigned, unassigned
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 9; // 3x3 grid
 
   // New project form state
   const [newProject, setNewProject] = useState({
@@ -126,27 +172,13 @@ const AdminProjectsPage: React.FC = () => {
   const fetchProjects = useCallback(async () => {
     try {
       setIsLoading(true);
-      const params = new URLSearchParams();
-      
-      if (filterStatus !== 'all') params.append('status', filterStatus);
-      if (filterPriority !== 'all') params.append('priority', filterPriority);
-      if (searchTerm) params.append('search', searchTerm);
-      
-      const response = await fetch(`/api/projects?${params.toString()}`);
+      // Remove filter params - fetch all projects and filter client-side
+      const response = await fetch('/api/projects');
       const result = await response.json();
       
       if (result.success) {
         // Transform API data to match component interface
         const transformedProjects = result.data.projects.map((project: any) => {
-          // Map team ObjectId back to team name
-          const getTeamName = (teamId: string) => {
-            const teamMapping: { [key: string]: string } = {
-              '507f1f77bcf86cd799439011': 'Team Web',
-              '507f1f77bcf86cd799439012': 'Team App',
-            };
-            return teamMapping[teamId] || `Team ${teamId}`;
-          };
-
           return {
             id: project._id,
             name: project.name,
@@ -157,7 +189,7 @@ const AdminProjectsPage: React.FC = () => {
             startDate: project.startDate.split('T')[0],
             endDate: project.endDate?.split('T')[0] || '',
             team: project.team,
-            teamName: getTeamName(project.team),
+            teamName: 'Loading...', // Will be updated after teams are loaded
             assignedMembers: project.assignedTo?.map((userId: string, index: number) => ({
               id: userId,
               name: `User ${index + 1}`,
@@ -166,7 +198,12 @@ const AdminProjectsPage: React.FC = () => {
             tags: project.tags || [],
             coins: project.coins,
             totalTasks: 0,
-            completedTasks: 0
+            completedTasks: 0,
+            isAssigned: project.isAssigned || false,
+            manager: project.manager,
+            managerName: project.manager ? 'Manager Name' : undefined,
+            assignedAt: project.assignedAt,
+            acceptedAt: project.acceptedAt
           };
         });
         
@@ -177,22 +214,77 @@ const AdminProjectsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [filterStatus, filterPriority, searchTerm]);
+  }, []); // Remove filter dependencies to prevent re-fetching on filter changes
+
+  // Fetch teams
+  const fetchTeams = useCallback(async () => {
+    try {
+      const response = await fetch('/api/teams');
+      const result = await response.json();
+      
+      if (result.success) {
+        const transformedTeams = result.data.teams.map((team: any) => ({
+          id: team._id,
+          name: team.name,
+          description: team.description,
+          teamLeader: team.teamLeader,
+          teamLeaderName: 'Team Leader Name', // You can fetch user details if needed
+          memberCount: team.members.length + 1 // +1 for team leader
+        }));
+        
+        setTeams(transformedTeams);
+      }
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  }, []);
 
   useEffect(() => {
     fetchProjects();
-  }, [fetchProjects]);
+    fetchTeams();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch once on mount to avoid infinite loop
+
+  // Map projects with correct team names using useMemo to avoid loops
+  const projectsWithTeamNames = useMemo(() => {
+    return projects.map(project => {
+      const getTeamName = (teamId: string) => {
+        if (!teamId) return 'Chưa có team';
+        const team = teams.find(t => t.id === teamId);
+        return team ? team.name : `Team ${teamId.slice(-6)}`;
+      };
+
+      return {
+        ...project,
+        teamName: getTeamName(project.team)
+      };
+    });
+  }, [projects, teams]);
 
   // Filter projects
-  const filteredProjects = projects.filter(project => {
+  const filteredProjects = projectsWithTeamNames.filter(project => {
     const matchesStatus = filterStatus === 'all' || project.status === filterStatus;
     const matchesPriority = filterPriority === 'all' || project.priority === filterPriority;
+    const matchesAssignment = filterAssignment === 'all' || 
+                             (filterAssignment === 'assigned' && project.isAssigned) ||
+                             (filterAssignment === 'unassigned' && !project.isAssigned);
     const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    return matchesStatus && matchesPriority && matchesSearch;
+    return matchesStatus && matchesPriority && matchesAssignment && matchesSearch;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
+  const startIndex = (currentPage - 1) * projectsPerPage;
+  const endIndex = startIndex + projectsPerPage;
+  const currentProjects = filteredProjects.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, filterPriority, filterAssignment, searchTerm]);
 
   const handleCreateProject = async () => {
     if (newProject.name.trim()) {
@@ -208,7 +300,9 @@ const AdminProjectsPage: React.FC = () => {
           coins: newProject.coins,
           createdBy: 'current-user-id', // Replace with actual user ID from auth
           tags: [],
-          assignedTo: []
+          assignedTo: [],
+          isAssigned: !!newProject.team, // Auto-assign if team is selected
+          assignedAt: newProject.team ? new Date().toISOString() : undefined
         };
 
         const response = await fetch('/api/projects', {
@@ -274,7 +368,9 @@ const AdminProjectsPage: React.FC = () => {
           startDate: newProject.startDate,
           endDate: newProject.endDate,
           team: newProject.team,
-          coins: newProject.coins
+          coins: newProject.coins,
+          isAssigned: !!newProject.team, // Auto-assign if team is selected
+          assignedAt: newProject.team && !editingProject.isAssigned ? new Date().toISOString() : editingProject.assignedAt
         };
 
         const response = await fetch(`/api/projects/${editingProject.id}`, {
@@ -346,14 +442,48 @@ const AdminProjectsPage: React.FC = () => {
     }
   };
 
-  // Calculate statistics
-  const stats = {
-    total: projects.length,
-    active: projects.filter(p => ['planning', 'in_progress', 'testing'].includes(p.status)).length,
-    completed: projects.filter(p => p.status === 'completed').length,
-    onHold: projects.filter(p => p.status === 'on_hold').length,
-    averageProgress: projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + p.progress, 0) / projects.length) : 0
+  // Handle assign project to team
+  const handleAssignProject = (project: Project) => {
+    setSelectedProject(project);
+    setShowAssignModal(true);
   };
+
+  const confirmAssignProject = async () => {
+    if (selectedProject && selectedTeamId) {
+      try {
+        const response = await fetch('/api/projects/assign', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            projectId: selectedProject.id,
+            teamId: selectedTeamId
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          setShowAssignModal(false);
+          setSelectedProject(null);
+          setSelectedTeamId('');
+          
+          // Refresh projects list
+          fetchProjects();
+          
+          alert('Project đã được gán cho team thành công!');
+        } else {
+          console.error('Error assigning project:', result.error);
+          alert('Có lỗi xảy ra khi gán project: ' + result.error);
+        }
+      } catch (error) {
+        console.error('Error assigning project:', error);
+        alert('Có lỗi xảy ra khi gán project');
+      }
+    }
+  };
+
 
   if (isLoading) {
     return (
@@ -389,92 +519,9 @@ const AdminProjectsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-          <div className="section-neumorphic p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                <span className="text-white text-xl">📊</span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {stats.total}
-                </p>
-                <p className="text-[var(--color-text-secondary)] text-sm">
-                  Tổng projects
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="section-neumorphic p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center">
-                <span className="text-white text-xl">🚀</span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {stats.active}
-                </p>
-                <p className="text-[var(--color-text-secondary)] text-sm">
-                  Đang thực hiện
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="section-neumorphic p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
-                <span className="text-white text-xl">✅</span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {stats.completed}
-                </p>
-                <p className="text-[var(--color-text-secondary)] text-sm">
-                  Hoàn thành
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="section-neumorphic p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-gray-500 to-gray-600 rounded-xl flex items-center justify-center">
-                <span className="text-white text-xl">⏸️</span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {stats.onHold}
-                </p>
-                <p className="text-[var(--color-text-secondary)] text-sm">
-                  Tạm dừng
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="section-neumorphic p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-                <span className="text-white text-xl">📈</span>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {stats.averageProgress}%
-                </p>
-                <p className="text-[var(--color-text-secondary)] text-sm">
-                  Tiến độ TB
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Filters */}
         <div className="section-neumorphic p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
                 Tìm kiếm
@@ -523,11 +570,27 @@ const AdminProjectsPage: React.FC = () => {
               </select>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                Gán team
+              </label>
+              <select
+                value={filterAssignment}
+                onChange={(e) => setFilterAssignment(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+              >
+                <option value="all">Tất cả</option>
+                <option value="unassigned">Chưa gán</option>
+                <option value="assigned">Đã gán</option>
+              </select>
+            </div>
+
             <div className="flex items-end">
               <button
                 onClick={() => {
                   setFilterStatus('all');
                   setFilterPriority('all');
+                  setFilterAssignment('all');
                   setSearchTerm('');
                 }}
                 className="w-full py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
@@ -539,194 +602,288 @@ const AdminProjectsPage: React.FC = () => {
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          {currentProjects.map((project) => (
             <div
               key={project.id}
-              className="section-neumorphic group relative bg-white rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden"
+              className="relative group"
               onClick={() => router.push(`/admin/projects/${project.id}`)}
             >
-              {/* Status Indicator Bar */}
-              <div className={`h-1 w-full ${
-                project.status === 'completed' ? 'bg-green-500' :
-                project.status === 'in_progress' ? 'bg-blue-500' :
-                project.status === 'testing' ? 'bg-purple-500' :
-                project.status === 'on_hold' ? 'bg-gray-400' :
-                'bg-yellow-500'
-              }`} />
-
-              <div className="p-6">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="font-bold text-gray-900 text-lg group-hover:text-[var(--color-accent)] transition-colors duration-200">
-                        {project.name}
-                      </h3>
-                      <PriorityBadge priority={project.priority} />
-                    </div>
-                    <p className="text-gray-500 text-sm font-medium">
-                      {project.teamName}
-                    </p>
-                  </div>
+              {/* Main Card - Compact Version */}
+              <div className="section-neumorphic bg-white rounded-2xl border border-gray-100/50 hover:border-blue-200/60 transition-all duration-500 cursor-pointer overflow-hidden hover:shadow-xl hover:shadow-blue-100/20 transform hover:-translate-y-1">
+                
+                {/* Status Header - Smaller */}
+                <div className="relative">
+                  <div className={`h-1.5 w-full ${
+                    project.status === 'completed' ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+                    project.status === 'in_progress' ? 'bg-gradient-to-r from-blue-400 to-cyan-500' :
+                    project.status === 'testing' ? 'bg-gradient-to-r from-purple-400 to-indigo-500' :
+                    project.status === 'on_hold' ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                    'bg-gradient-to-r from-yellow-400 to-orange-500'
+                  }`} />
                   
-                  {/* Action Buttons */}
-                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditProject(project);
-                      }}
-                      className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200"
-                      title="Chỉnh sửa"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteProject(project);
-                      }}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                      title="Xóa"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <p className="text-gray-600 text-sm mb-4 line-clamp-2 leading-relaxed">
-                  {project.description}
-                </p>
-
-                {/* Progress Section */}
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-medium text-gray-500">Tiến độ</span>
-                    <span className="text-xs font-bold text-gray-700">{project.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-100 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-500 ${
-                        project.progress >= 80 ? 'bg-gradient-to-r from-green-400 to-green-600' :
-                        project.progress >= 50 ? 'bg-gradient-to-r from-blue-400 to-blue-600' :
-                        project.progress >= 20 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
-                        'bg-gradient-to-r from-gray-300 to-gray-400'
-                      }`}
-                      style={{ width: `${project.progress}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Stats Row */}
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-gray-900">{project.totalTasks}</div>
-                    <div className="text-xs text-gray-500">Tasks</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg font-bold text-green-600">{project.completedTasks}</div>
-                    <div className="text-xs text-gray-500">Hoàn thành</div>
-                  </div>
-                </div>
-
-                {/* Team Members */}
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">Team:</span>
-                    <div className="flex -space-x-2">
-                      {project.assignedMembers.slice(0, 3).map((member) => (
-                        <div
-                          key={member.id}
-                          className="w-7 h-7 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-sm"
-                          title={member.name}
-                        >
-                          {member.name.charAt(0)}
+                  {/* Header Content - Compact */}
+                  <div className="p-4 pb-3">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        {/* Project Title & Badges */}
+                        <div className="flex items-start gap-2 mb-1.5">
+                          <h3 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-blue-600 transition-colors duration-300 flex-1 min-w-0 line-clamp-1">
+                            {project.name}
+                          </h3>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <PriorityBadge priority={project.priority} />
+                          </div>
                         </div>
-                      ))}
-                      {project.assignedMembers.length > 3 && (
-                        <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 text-xs font-bold border-2 border-white">
-                          +{project.assignedMembers.length - 3}
-                        </div>
-                      )}
-                      {project.assignedMembers.length === 0 && (
-                        <div className="w-7 h-7 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 text-xs border-2 border-white">
+                        
+                        {/* Team Info */}
+                        <div className="flex items-center gap-1.5 text-gray-500 text-xs">
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                           </svg>
+                          <span className="font-medium truncate">{project.teamName}</span>
                         </div>
-                      )}
+                      </div>
+                      
+                      {/* Action Buttons - Smaller */}
+                      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        {!project.isAssigned && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAssignProject(project);
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 hover:scale-110"
+                            title="Gán cho team"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditProject(project);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
+                          title="Chỉnh sửa"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProject(project);
+                          }}
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
+                          title="Xóa"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <StatusBadge status={project.status} />
                 </div>
 
-                {/* Tags */}
-                {project.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {project.tags.slice(0, 2).map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {project.tags.length > 2 && (
-                      <span className="px-2 py-1 bg-gray-50 text-gray-600 rounded-md text-xs font-medium">
-                        +{project.tags.length - 2}
-                      </span>
-                    )}
-                  </div>
-                )}
+                {/* Content Body - Compact */}
+                <div className="px-4">
+                  {/* Description */}
+                  <p className="text-gray-600 text-xs mb-4 line-clamp-2 leading-relaxed">
+                    {project.description}
+                  </p>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                  <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <div className="flex items-center space-x-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                      </svg>
-                      <span>{new Date(project.endDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short' })}</span>
+                  {/* Progress Section */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-semibold text-gray-700 flex items-center gap-1">
+                        <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                        </svg>
+                        Tiến độ
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-800">{project.progress}%</span>
+                        <StatusBadge status={project.status} />
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="relative">
+                      <div className="w-full bg-gray-100 rounded-full h-2 shadow-inner">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-700 ease-out shadow-sm ${
+                            project.progress >= 80 ? 'bg-gradient-to-r from-green-400 to-emerald-500' :
+                            project.progress >= 50 ? 'bg-gradient-to-r from-blue-400 to-cyan-500' :
+                            project.progress >= 20 ? 'bg-gradient-to-r from-yellow-400 to-orange-500' :
+                            'bg-gradient-to-r from-gray-300 to-gray-400'
+                          }`}
+                          style={{ width: `${project.progress}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                  
-                  {project.coins && (
-                    <div className="text-xs font-semibold text-gray-700">
-                      {project.coins.toLocaleString()} Coins
+
+                  {/* Stats Grid - Compact */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="text-center p-2.5 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100/50">
+                      <div className="text-lg font-bold text-blue-600 mb-0.5">{project.totalTasks}</div>
+                      <div className="text-xs text-blue-500 font-medium uppercase tracking-wide">Tasks</div>
+                    </div>
+                    <div className="text-center p-2.5 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-100/50">
+                      <div className="text-lg font-bold text-green-600 mb-0.5">{project.completedTasks}</div>
+                      <div className="text-xs text-green-500 font-medium uppercase tracking-wide">Hoàn thành</div>
+                    </div>
+                  </div>
+
+                  {/* Tags - Compact */}
+                  {project.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-4">
+                      {project.tags.slice(0, 2).map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 rounded-md text-xs font-semibold border border-blue-200/50"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                      {project.tags.length > 2 && (
+                        <span className="px-2 py-1 bg-gradient-to-r from-gray-50 to-gray-100 text-gray-600 rounded-md text-xs font-semibold border border-gray-200/50">
+                          +{project.tags.length - 2}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Hover Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-accent)]/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                {/* Footer - Compact */}
+                <div className="px-4 py-3 bg-gradient-to-r from-gray-50/50 to-gray-100/30 border-t border-gray-100/80">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-gray-500">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-xs font-medium">
+                        {new Date(project.endDate).toLocaleDateString('vi-VN', { 
+                          day: '2-digit', 
+                          month: 'short'
+                        })}
+                      </span>
+                    </div>
+                    
+                    {project.coins && (
+                      <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-full border border-yellow-200/50">
+                        <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs font-bold text-yellow-700">
+                          {project.coins.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Hover Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl pointer-events-none" />
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Empty State */}
-        {filteredProjects.length === 0 && (
-          <div className="section-neumorphic p-12 text-center">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">📁</span>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center mt-8 space-x-3">
+            {/* Previous Button */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                currentPage === 1
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm'
+              }`}
+            >
+              ← Trước
+            </button>
+
+            {/* Page Numbers */}
+            <div className="flex space-x-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                // Show first, last, current, and pages around current
+                const showPage = 
+                  page === 1 || 
+                  page === totalPages || 
+                  (page >= currentPage - 1 && page <= currentPage + 1);
+                
+                const showEllipsis = 
+                  (page === 2 && currentPage > 4) || 
+                  (page === totalPages - 1 && currentPage < totalPages - 3);
+
+                if (!showPage && !showEllipsis) return null;
+
+                if (showEllipsis) {
+                  return (
+                    <span
+                      key={`ellipsis-${page}`}
+                      className="px-3 py-2 text-gray-400 text-sm"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      currentPage === page
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-200/50 scale-105'
+                        : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm hover:scale-105'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
             </div>
-            <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">
-              Không tìm thấy project nào
-            </h3>
-            <p className="text-[var(--color-text-secondary)] mb-4">
-              Thử thay đổi bộ lọc hoặc tạo project mới
-            </p>
+
+            {/* Next Button */}
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                currentPage === totalPages
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm'
+              }`}
+            >
+              Tiếp →
+            </button>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {currentProjects.length === 0 && (
+          <div className="text-center py-12 bg-white rounded-3xl border border-gray-100/50 section-neumorphic">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Không có project nào</h3>
+            <p className="text-gray-500 mb-6">Hãy tạo project đầu tiên của bạn</p>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="neumorphic-button"
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200"
             >
-              Tạo Project Đầu Tiên
+              Tạo Project Mới
             </button>
           </div>
         )}
@@ -825,17 +982,23 @@ const AdminProjectsPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    Team
+                    Team (tùy chọn)
                   </label>
                   <select
                     value={newProject.team}
                     onChange={(e) => setNewProject(prev => ({ ...prev, team: e.target.value }))}
                     className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   >
-                    <option value="">Chọn team</option>
-                    <option value="1">Team Web</option>
-                    <option value="2">Team App</option>
+                    <option value="">Chọn team (tùy chọn)</option>
+                    {teams.map(team => (
+                      <option key={team.id} value={team.id}>
+                        {team.name} ({team.memberCount} thành viên)
+                      </option>
+                    ))}
                   </select>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                    Có thể gán team sau bằng nút &quot;Gán cho team&quot; trên project card
+                  </p>
                 </div>
 
                 <div>
@@ -964,17 +1127,23 @@ const AdminProjectsPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    Team
+                    Team (tùy chọn)
                   </label>
                   <select
                     value={newProject.team}
                     onChange={(e) => setNewProject(prev => ({ ...prev, team: e.target.value }))}
                     className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   >
-                    <option value="">Chọn team</option>
-                    <option value="1">Team Web</option>
-                    <option value="2">Team App</option>
+                    <option value="">Chọn team (tùy chọn)</option>
+                    {teams.map(team => (
+                      <option key={team.id} value={team.id}>
+                        {team.name} ({team.memberCount} thành viên)
+                      </option>
+                    ))}
                   </select>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                    Có thể gán team sau bằng nút &quot;Gán cho team&quot; trên project card
+                  </p>
                 </div>
 
                 <div>
@@ -1049,6 +1218,68 @@ const AdminProjectsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Assignment Modal */}
+      {showAssignModal && selectedProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[var(--color-background)] rounded-2xl p-8 max-w-md w-full mx-4 neumorphic-element">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-[var(--color-text-primary)]">
+                Gán dự án cho team
+              </h2>
+              <button
+                onClick={() => setShowAssignModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)] mb-2">
+                {selectedProject.name}
+              </h3>
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                {selectedProject.description}
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
+                Chọn team
+              </label>
+              <select
+                value={selectedTeamId}
+                onChange={(e) => setSelectedTeamId(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+              >
+                <option value="">Chọn team...</option>
+                {teams.map(team => (
+                  <option key={team.id} value={team.id}>
+                    {team.name} ({team.memberCount} thành viên)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowAssignModal(false)}
+                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={confirmAssignProject}
+                disabled={!selectedTeamId}
+                className="flex-1 py-3 px-4 rounded-xl bg-[var(--color-accent)] text-white font-medium hover:bg-[var(--color-accent-hover)] transition-colors duration-200 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
+              >
+                Gán project
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 };
