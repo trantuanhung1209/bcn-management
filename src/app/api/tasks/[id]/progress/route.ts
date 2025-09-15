@@ -6,9 +6,10 @@ import { getAuthenticatedUserId } from '@/lib/auth-middleware';
 // PUT /api/tasks/[id]/progress - Member cập nhật progress
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -36,7 +37,7 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const success = await TaskModel.updateProgress(params.id, progress, userId);
+    const success = await TaskModel.updateProgress(resolvedParams.id, progress, userId);
     
     if (success) {
       return NextResponse.json({

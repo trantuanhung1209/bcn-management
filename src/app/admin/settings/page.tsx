@@ -4,13 +4,13 @@ import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 
 const SettingsPage: React.FC = () => {
-  const [userRole, setUserRole] = useState<'admin' | 'manager' | 'member'>('admin'); // Default to admin since this is admin settings page
+  const [userRole, setUserRole] = useState<'admin' | 'team_leader' | 'member'>('admin'); // Default to admin since this is admin settings page
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Get user role from localStorage
     if (typeof window !== 'undefined') {
-      const storedRole = localStorage.getItem('userRole') as 'admin' | 'manager' | 'member';
+      const storedRole = localStorage.getItem('userRole') as 'admin' | 'team_leader' | 'member';
       if (storedRole) {
         setUserRole(storedRole);
       }

@@ -8,9 +8,10 @@ import { getProjectsCollection } from '@/lib/mongodb';
 // PUT: Accept or reject project assignment
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     // Get authenticated user ID from token/session
     const teamLeaderId = await getAuthenticatedUserId(request);
     
@@ -21,7 +22,7 @@ export async function PUT(
       );
     }
 
-    const projectId = params.id;
+    const projectId = resolvedParams.id;
     const { action } = await request.json();
 
     if (!action || !['accept', 'reject'].includes(action)) {
