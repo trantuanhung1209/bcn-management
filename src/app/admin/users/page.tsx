@@ -324,7 +324,7 @@ export default function AdminUsersPage() {
           <div className="flex space-x-3">
             <button
               onClick={() => window.location.href = '/admin/users/deleted'}
-              className="neumorphic-button bg-orange-500 hover:bg-orange-600 text-white"
+              className="neumorphic-button bg-orange-500 hover:bg-orange-600 text-white cursor-pointer"
             >
               🗂️ Users Đã Xóa
             </button>
@@ -380,7 +380,7 @@ export default function AdminUsersPage() {
                   placeholder="Search by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="neumorphic-input w-full px-4 py-3 text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none"
+                  className="neumorphic-input w-full px-3 py-2 neumorphic-input text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none"
                 />
               </div>
               <div>
@@ -390,7 +390,7 @@ export default function AdminUsersPage() {
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className="neumorphic-input w-full px-4 py-3 text-[var(--color-text-primary)] focus:outline-none"
+                  className="neumorphic-input w-full px-3 py-2 neumorphic-input text-[var(--color-text-primary)] focus:outline-none"
                 >
                   <option value="all">All Roles</option>
                   <option value="team_leader">Team Leader</option>
@@ -535,13 +535,13 @@ export default function AdminUsersPage() {
                             <div className="flex justify-end space-x-2">
                               <button
                                 onClick={() => handleEdit(user)}
-                                className="px-3 py-1 text-sm rounded-lg bg-[var(--color-accent-5)] text-[var(--color-text-primary)] hover:bg-[var(--color-accent)] transition-colors"
+                                className="px-3 py-1 text-sm rounded-lg bg-[var(--color-accent-5)] text-[var(--color-text-primary)] hover:bg-[var(--color-accent)] transition-colors cursor-pointer"
                               >
                                 ✏️ Edit
                               </button>
                               <button
                                 onClick={() => handleDelete(user._id)}
-                                className="px-3 py-1 text-sm rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+                                className="px-3 py-1 text-sm rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors cursor-pointer"
                                 title="Xóa user (có thể khôi phục)"
                               >
                                 🗑️ Xóa
@@ -697,7 +697,7 @@ export default function AdminUsersPage() {
                       setShowCreateModal(false);
                       setEditingUser(null);
                     }}
-                    className="px-6 py-3 text-[var(--color-text-secondary)] bg-[var(--color-background-secondary)] rounded-lg hover:bg-[var(--color-border)] transition-colors"
+                    className="px-6 py-3 text-[var(--color-text-secondary)] bg-[var(--color-background-secondary)] rounded-lg hover:bg-[var(--color-border)] transition-colors cursor-pointer"
                   >
                     Cancel
                   </button>

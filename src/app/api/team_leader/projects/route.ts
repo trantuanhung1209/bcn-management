@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProjectModel } from '@/models/Project';
 import { TeamModel } from '@/models/Team';
+import { TaskModel } from '@/models/Task';
 import { getAuthenticatedUserId } from '@/lib/auth-middleware';
+import { TaskStatus } from '@/types';
 
 // GET: Get projects assigned to team leader's team
 export async function GET(request: NextRequest) {
@@ -66,10 +68,41 @@ export async function GET(request: NextRequest) {
 
     console.log('Found projects:', projects);
 
+    // Get task statistics for each project
+    const projectsWithStats = await Promise.all(
+      projects.projects.map(async (project) => {
+        try {
+          // Get all tasks for this project
+          const allTasks = await TaskModel.findByProject(project._id!.toString());
+          const totalTasks = allTasks.length;
+          
+          // Count completed tasks (status === 'done')
+          const completedTasks = allTasks.filter(task => 
+            task.status === TaskStatus.DONE
+          ).length;
+
+          console.log(`Project ${project.name}: ${completedTasks}/${totalTasks} tasks completed`);
+
+          return {
+            ...project,
+            totalTasks,
+            completedTasks
+          };
+        } catch (error) {
+          console.error(`Error getting tasks for project ${project._id}:`, error);
+          return {
+            ...project,
+            totalTasks: 0,
+            completedTasks: 0
+          };
+        }
+      })
+    );
+
     return NextResponse.json({
       success: true,
       data: {
-        projects: projects.projects,
+        projects: projectsWithStats,
         total: projects.total,
         team: {
           id: team._id,

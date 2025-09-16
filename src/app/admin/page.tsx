@@ -471,7 +471,7 @@ const AdminPage: React.FC = () => {
                   setFilterType('all');
                   setFilterStatus('all');
                 }}
-                className="w-full px-3 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors duration-200 text-sm"
+                className="w-full px-3 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors duration-200 text-sm cursor-pointer"
               >
                 Xóa bộ lọc
               </button>
@@ -544,7 +544,7 @@ const AdminPage: React.FC = () => {
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => openEditModal(team)}
-                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                          className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors duration-200 cursor-pointer"
                           title="Chỉnh sửa"
                           disabled={!team}
                         >
@@ -552,7 +552,7 @@ const AdminPage: React.FC = () => {
                         </button>
                         <button
                           onClick={() => team?.id && handleToggleStatus(team.id)}
-                          className={`p-2 hover:bg-gray-50 rounded-lg transition-colors duration-200 ${
+                          className={`p-2 hover:bg-gray-50 rounded-lg transition-colors duration-200 cursor-pointer ${
                             team?.status === 'active' ? 'text-orange-600 hover:text-orange-800' : 'text-green-600 hover:text-green-800'
                           }`}
                           title={team?.status === 'active' ? 'Vô hiệu hóa' : 'Kích hoạt'}
@@ -562,7 +562,7 @@ const AdminPage: React.FC = () => {
                         </button>
                         <button
                           onClick={() => team?.id && handleDeleteTeam(team.id)}
-                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                          className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200 cursor-pointer"
                           title="Xóa"
                           disabled={!team?.id}
                         >
@@ -602,7 +602,7 @@ const AdminPage: React.FC = () => {
                     type="text"
                     value={teamName}
                     onChange={(e) => setTeamName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
                     placeholder="Nhập tên team"
                   />
                 </div>
@@ -614,7 +614,7 @@ const AdminPage: React.FC = () => {
                   <textarea
                     value={teamDescription}
                     onChange={(e) => setTeamDescription(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner resize-none"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner resize-none"
                     rows={3}
                     placeholder="Nhập mô tả team"
                   />
@@ -627,7 +627,7 @@ const AdminPage: React.FC = () => {
                   <select
                     value={teamType}
                     onChange={(e) => setTeamType(e.target.value as 'Web' | 'App')}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
                   >
                     <option value="Web">Web</option>
                     <option value="App">App</option>
@@ -642,7 +642,7 @@ const AdminPage: React.FC = () => {
                     type="text"
                     value={teamLeader}
                     onChange={(e) => setTeamLeader(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
                     placeholder="Nhập tên team leader"
                   />
                 </div>
@@ -654,7 +654,7 @@ const AdminPage: React.FC = () => {
                     setShowCreateModal(false);
                     resetForm();
                   }}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -687,7 +687,7 @@ const AdminPage: React.FC = () => {
                     type="text"
                     value={teamName}
                     onChange={(e) => setTeamName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
                     placeholder="Nhập tên team"
                   />
                 </div>
@@ -699,7 +699,7 @@ const AdminPage: React.FC = () => {
                   <textarea
                     value={teamDescription}
                     onChange={(e) => setTeamDescription(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner resize-none"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner resize-none"
                     rows={3}
                     placeholder="Nhập mô tả team"
                   />
@@ -712,7 +712,7 @@ const AdminPage: React.FC = () => {
                   <select
                     value={teamType}
                     onChange={(e) => setTeamType(e.target.value as 'Web' | 'App')}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
                   >
                     <option value="Web">Web</option>
                     <option value="App">App</option>
@@ -727,7 +727,7 @@ const AdminPage: React.FC = () => {
                     type="text"
                     value={teamLeader}
                     onChange={(e) => setTeamLeader(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
                     placeholder="Nhập tên team leader"
                   />
                 </div>
@@ -740,7 +740,7 @@ const AdminPage: React.FC = () => {
                     setEditingTeam(null);
                     resetForm();
                   }}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
                 >
                   Hủy
                 </button>

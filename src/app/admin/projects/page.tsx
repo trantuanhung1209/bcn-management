@@ -530,7 +530,7 @@ const AdminProjectsPage: React.FC = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                 placeholder="Tìm theo tên, mô tả, tag..."
               />
             </div>
@@ -542,7 +542,7 @@ const AdminProjectsPage: React.FC = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
               >
                 <option value="all">Tất cả</option>
                 <option value="planning">Lên kế hoạch</option>
@@ -560,7 +560,7 @@ const AdminProjectsPage: React.FC = () => {
               <select
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
               >
                 <option value="all">Tất cả</option>
                 <option value="low">Thấp</option>
@@ -577,7 +577,7 @@ const AdminProjectsPage: React.FC = () => {
               <select
                 value={filterAssignment}
                 onChange={(e) => setFilterAssignment(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
               >
                 <option value="all">Tất cả</option>
                 <option value="unassigned">Chưa gán</option>
@@ -593,7 +593,7 @@ const AdminProjectsPage: React.FC = () => {
                   setFilterAssignment('all');
                   setSearchTerm('');
                 }}
-                className="w-full py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                className="w-full py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
               >
                 Xóa bộ lọc
               </button>
@@ -653,7 +653,7 @@ const AdminProjectsPage: React.FC = () => {
                               e.stopPropagation();
                               handleAssignProject(project);
                             }}
-                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 hover:scale-110"
+                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer"
                             title="Gán cho team"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -666,7 +666,7 @@ const AdminProjectsPage: React.FC = () => {
                             e.stopPropagation();
                             handleEditProject(project);
                           }}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110"
+                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer"
                           title="Chỉnh sửa"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -678,7 +678,7 @@ const AdminProjectsPage: React.FC = () => {
                             e.stopPropagation();
                             handleDeleteProject(project);
                           }}
-                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110"
+                          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer"
                           title="Xóa"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -803,10 +803,10 @@ const AdminProjectsPage: React.FC = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
                 currentPage === 1
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm'
+                  : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm '
               }`}
             >
               ← Trước
@@ -842,7 +842,7 @@ const AdminProjectsPage: React.FC = () => {
                   <button
                     key={page}
                     onClick={() => setCurrentPage(page)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
                       currentPage === page
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-200/50 scale-105'
                         : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm hover:scale-105'
@@ -858,7 +858,7 @@ const AdminProjectsPage: React.FC = () => {
             <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
                 currentPage === totalPages
                   ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   : 'bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm'
@@ -881,7 +881,7 @@ const AdminProjectsPage: React.FC = () => {
             <p className="text-gray-500 mb-6">Hãy tạo project đầu tiên của bạn</p>
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200"
+              className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
             >
               Tạo Project Mới
             </button>
@@ -905,7 +905,7 @@ const AdminProjectsPage: React.FC = () => {
                     type="text"
                     value={newProject.name}
                     onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     placeholder="Nhập tên project"
                   />
                 </div>
@@ -917,7 +917,7 @@ const AdminProjectsPage: React.FC = () => {
                   <textarea
                     value={newProject.description}
                     onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input resize-none"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input resize-none"
                     rows={3}
                     placeholder="Nhập mô tả project"
                   />
@@ -930,7 +930,7 @@ const AdminProjectsPage: React.FC = () => {
                   <select
                     value={newProject.status}
                     onChange={(e) => setNewProject(prev => ({ ...prev, status: e.target.value as any }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   >
                     <option value="planning">Lên kế hoạch</option>
                     <option value="in_progress">Đang thực hiện</option>
@@ -947,7 +947,7 @@ const AdminProjectsPage: React.FC = () => {
                   <select
                     value={newProject.priority}
                     onChange={(e) => setNewProject(prev => ({ ...prev, priority: e.target.value as any }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   >
                     <option value="low">Thấp</option>
                     <option value="medium">Trung bình</option>
@@ -964,7 +964,7 @@ const AdminProjectsPage: React.FC = () => {
                     type="date"
                     value={newProject.startDate}
                     onChange={(e) => setNewProject(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   />
                 </div>
 
@@ -976,7 +976,7 @@ const AdminProjectsPage: React.FC = () => {
                     type="date"
                     value={newProject.endDate}
                     onChange={(e) => setNewProject(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   />
                 </div>
 
@@ -987,7 +987,7 @@ const AdminProjectsPage: React.FC = () => {
                   <select
                     value={newProject.team}
                     onChange={(e) => setNewProject(prev => ({ ...prev, team: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   >
                     <option value="">Chọn team (tùy chọn)</option>
                     {teams.map(team => (
@@ -1009,7 +1009,7 @@ const AdminProjectsPage: React.FC = () => {
                     type="number"
                     value={newProject.coins}
                     onChange={(e) => setNewProject(prev => ({ ...prev, coins: Number(e.target.value) }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     placeholder="0"
                   />
                 </div>
@@ -1018,7 +1018,7 @@ const AdminProjectsPage: React.FC = () => {
               <div className="flex space-x-3 mt-6">
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -1050,7 +1050,7 @@ const AdminProjectsPage: React.FC = () => {
                     type="text"
                     value={newProject.name}
                     onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     placeholder="Nhập tên project"
                   />
                 </div>
@@ -1062,7 +1062,7 @@ const AdminProjectsPage: React.FC = () => {
                   <textarea
                     value={newProject.description}
                     onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input resize-none"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input resize-none"
                     rows={3}
                     placeholder="Nhập mô tả project"
                   />
@@ -1075,7 +1075,7 @@ const AdminProjectsPage: React.FC = () => {
                   <select
                     value={newProject.status}
                     onChange={(e) => setNewProject(prev => ({ ...prev, status: e.target.value as any }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   >
                     <option value="planning">Lên kế hoạch</option>
                     <option value="in_progress">Đang thực hiện</option>
@@ -1092,7 +1092,7 @@ const AdminProjectsPage: React.FC = () => {
                   <select
                     value={newProject.priority}
                     onChange={(e) => setNewProject(prev => ({ ...prev, priority: e.target.value as any }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   >
                     <option value="low">Thấp</option>
                     <option value="medium">Trung bình</option>
@@ -1109,7 +1109,7 @@ const AdminProjectsPage: React.FC = () => {
                     type="date"
                     value={newProject.startDate}
                     onChange={(e) => setNewProject(prev => ({ ...prev, startDate: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   />
                 </div>
 
@@ -1121,7 +1121,7 @@ const AdminProjectsPage: React.FC = () => {
                     type="date"
                     value={newProject.endDate}
                     onChange={(e) => setNewProject(prev => ({ ...prev, endDate: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   />
                 </div>
 
@@ -1132,7 +1132,7 @@ const AdminProjectsPage: React.FC = () => {
                   <select
                     value={newProject.team}
                     onChange={(e) => setNewProject(prev => ({ ...prev, team: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   >
                     <option value="">Chọn team (tùy chọn)</option>
                     {teams.map(team => (
@@ -1154,7 +1154,7 @@ const AdminProjectsPage: React.FC = () => {
                     type="number"
                     value={newProject.coins}
                     onChange={(e) => setNewProject(prev => ({ ...prev, coins: Number(e.target.value) }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     placeholder="0"
                   />
                 </div>
@@ -1166,7 +1166,7 @@ const AdminProjectsPage: React.FC = () => {
                     setIsEditModalOpen(false);
                     setEditingProject(null);
                   }}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700  cursor-pointer font-medium hover:bg-gray-300 transition-colors duration-200"
                 >
                   Hủy
                 </button>
@@ -1202,13 +1202,13 @@ const AdminProjectsPage: React.FC = () => {
                       setIsDeleteModalOpen(false);
                       setDeletingProject(null);
                     }}
-                    className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                    className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 cursor-pointer font-medium hover:bg-gray-300 transition-colors duration-200"
                   >
                     Hủy
                   </button>
                   <button
                     onClick={confirmDeleteProject}
-                    className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors duration-200"
+                    className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors duration-200 cursor-pointer"
                   >
                     Xóa
                   </button>
@@ -1229,7 +1229,7 @@ const AdminProjectsPage: React.FC = () => {
               </h2>
               <button
                 onClick={() => setShowAssignModal(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className="text-gray-500 hover:text-gray-700 text-2xl cursor-pointer"
               >
                 ×
               </button>
@@ -1251,7 +1251,7 @@ const AdminProjectsPage: React.FC = () => {
               <select
                 value={selectedTeamId}
                 onChange={(e) => setSelectedTeamId(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
               >
                 <option value="">Chọn team...</option>
                 {teams.map(team => (
@@ -1265,7 +1265,7 @@ const AdminProjectsPage: React.FC = () => {
             <div className="flex gap-4">
               <button
                 onClick={() => setShowAssignModal(false)}
-                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
               >
                 Hủy
               </button>

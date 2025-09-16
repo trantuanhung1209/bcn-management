@@ -73,7 +73,7 @@ const PriorityBadge: React.FC<{
       case "high":
         return "🟠";
       case "urgent":
-        return "�";
+        return "🔴";
       default:
         return "⚪";
     }
@@ -280,8 +280,8 @@ export default function TeamLeaderProjectsPage() {
               })) || [],
             tags: project.tags || [],
             coins: project.coins,
-            totalTasks: 0,
-            completedTasks: 0,
+            totalTasks: project.totalTasks || 0,
+            completedTasks: project.completedTasks || 0,
             isAssigned: project.isAssigned || false,
             manager: project.manager,
             managerName: project.manager ? "Manager Name" : undefined,
@@ -456,7 +456,7 @@ export default function TeamLeaderProjectsPage() {
               <div className="space-y-3">
                 <button
                   onClick={() => router.push("/team_leader/dashboard")}
-                  className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full py-3 px-6 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <svg
                     className="w-5 h-5"
@@ -479,7 +479,7 @@ export default function TeamLeaderProjectsPage() {
                     (window.location.href =
                       "mailto:admin@company.com?subject=Yêu cầu phân công Team Leader")
                   }
-                  className="w-full py-3 px-6 rounded-xl bg-white border-2 border-blue-200 text-blue-700 font-medium hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full py-3 px-6 rounded-xl bg-white border-2 border-blue-200 text-blue-700 font-medium hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <svg
                     className="w-5 h-5"
@@ -618,7 +618,7 @@ export default function TeamLeaderProjectsPage() {
                   setFilterAssignment("all");
                   setSearchTerm("");
                 }}
-                className="w-full py-2 px-3 text-sm rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                className="w-full py-2 px-3 text-sm rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
               >
                 Xóa bộ lọc
               </button>
@@ -683,7 +683,7 @@ export default function TeamLeaderProjectsPage() {
                         e.stopPropagation(); // Prevent card click
                         handleDeleteProject(project);
                       }}
-                      className="absolute top-3 right-3 z-20 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="absolute top-3 right-3 z-20 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl cursor-pointer"
                       title="Xóa vĩnh viễn project này khỏi database"
                     >
                       <svg
@@ -883,7 +883,7 @@ export default function TeamLeaderProjectsPage() {
                           onClick={() =>
                             handleProjectAction(project.id, "accept")
                           }
-                          className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center gap-1"
+                          className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <span>✅</span>
                           <span>Chấp nhận</span>
@@ -892,7 +892,7 @@ export default function TeamLeaderProjectsPage() {
                           onClick={() =>
                             handleProjectAction(project.id, "reject")
                           }
-                          className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-1"
+                          className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <span>❌</span>
                           <span>Từ chối</span>
@@ -982,7 +982,7 @@ export default function TeamLeaderProjectsPage() {
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
                 currentPage === 1
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm"
@@ -1022,7 +1022,7 @@ export default function TeamLeaderProjectsPage() {
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
                         currentPage === page
                           ? "bg-blue-600 text-white shadow-lg shadow-blue-200/50 scale-105"
                           : "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm hover:scale-105"
@@ -1041,7 +1041,7 @@ export default function TeamLeaderProjectsPage() {
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
               disabled={currentPage === totalPages}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer ${
                 currentPage === totalPages
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : "bg-white border border-gray-200 text-gray-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 shadow-sm"
@@ -1076,7 +1076,7 @@ export default function TeamLeaderProjectsPage() {
               </h3>
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
               >
                 <svg
                   className="w-6 h-6"
@@ -1165,13 +1165,13 @@ export default function TeamLeaderProjectsPage() {
             <div className="flex space-x-3">
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 onClick={confirmDeleteProject}
-                className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <svg
                   className="w-4 h-4"

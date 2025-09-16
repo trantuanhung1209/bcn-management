@@ -284,7 +284,7 @@ const ProjectDetailPage: React.FC = () => {
           <div>
             <button
               onClick={() => router.back()}
-              className="text-[var(--color-accent)] hover:underline mb-2 flex items-center space-x-1"
+              className="text-[var(--color-accent)] hover:underline mb-2 flex items-center space-x-1 cursor-pointer"
             >
               <span>←</span>
               <span>Quay lại</span>
@@ -462,7 +462,7 @@ const ProjectDetailPage: React.FC = () => {
                     </select>
                     <button
                       onClick={() => handleDeleteTask(task)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                      className="p-1 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200 cursor-pointer"
                       title="Xóa task"
                     >
                       🗑️
@@ -511,7 +511,7 @@ const ProjectDetailPage: React.FC = () => {
                     type="text"
                     value={newTask.title}
                     onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     placeholder="Nhập tiêu đề task"
                   />
                 </div>
@@ -523,7 +523,7 @@ const ProjectDetailPage: React.FC = () => {
                   <textarea
                     value={newTask.description}
                     onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input resize-none"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input resize-none"
                     rows={3}
                     placeholder="Nhập mô tả task"
                   />
@@ -537,7 +537,7 @@ const ProjectDetailPage: React.FC = () => {
                     <select
                       value={newTask.priority}
                       onChange={(e) => setNewTask(prev => ({ ...prev, priority: e.target.value as any }))}
-                      className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                      className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     >
                       <option value="low">Thấp</option>
                       <option value="medium">Trung bình</option>
@@ -554,7 +554,7 @@ const ProjectDetailPage: React.FC = () => {
                       type="date"
                       value={newTask.dueDate}
                       onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                      className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     />
                   </div>
                 </div>
@@ -563,7 +563,7 @@ const ProjectDetailPage: React.FC = () => {
               <div className="flex space-x-3 mt-6">
                 <button
                   onClick={() => setIsCreateTaskModalOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
                 >
                   Hủy
                 </button>
@@ -599,13 +599,13 @@ const ProjectDetailPage: React.FC = () => {
                       setIsDeleteTaskModalOpen(false);
                       setDeletingTask(null);
                     }}
-                    className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                    className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
                   >
                     Hủy
                   </button>
                   <button
                     onClick={confirmDeleteTask}
-                    className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors duration-200"
+                    className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors duration-200 cursor-pointer"
                   >
                     Xóa
                   </button>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
 import LogoutConfirmModal from '@/components/ui/LogoutConfirmModal';
 
 interface SidebarProps {
@@ -15,15 +16,72 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [userName, setUserName] = useState('User Name');
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<'admin' | 'team_leader' | 'member'>('member');
+  const [isLoadingUser, setIsLoadingUser] = useState(false);
 
-  // Get user name from localStorage and detect role
+  // Fetch user data from API
+  const fetchUserData = async () => {
+    if (typeof window === 'undefined') return;
+
+    const userId = localStorage.getItem('userId');
+    const authToken = localStorage.getItem('authToken');
+
+    if (!userId || !authToken) {
+      console.log('No userId or authToken found in localStorage');
+      return;
+    }
+
+    setIsLoadingUser(true);
+    try {
+      const response = await fetch('/api/auth/me', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'X-User-ID': userId,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        const user = result.data;
+        setUserName(`${user.firstName} ${user.lastName}`);
+        setUserAvatar(user.avatar || null);
+        setCurrentRole(user.role || 'member');
+        
+        // Optional: Update localStorage with fresh data
+        localStorage.setItem('userName', `${user.firstName} ${user.lastName}`);
+        localStorage.setItem('userRole', user.role || 'member');
+        
+        console.log('User data fetched successfully:', user);
+      } else {
+        console.error('Failed to fetch user data:', result.error);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      // Fallback to localStorage if API fails
+      const storedName = localStorage.getItem('userName');
+      const storedRole = localStorage.getItem('userRole');
+      if (storedName) setUserName(storedName);
+      if (storedRole && (storedRole === 'admin' || storedRole === 'team_leader' || storedRole === 'member')) {
+        setCurrentRole(storedRole);
+      }
+    } finally {
+      setIsLoadingUser(false);
+    }
+  };
+
+  // Get user data from API and detect role
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const storedName = localStorage.getItem('userName');
-      if (storedName) {
-        setUserName(storedName);
-      }
+      // Fetch user data from API first
+      fetchUserData();
 
       // Detect role from userRole prop, URL, or localStorage
       if (userRole) {
@@ -51,6 +109,42 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
     }
   }, [userRole, pathname]);
 
+  // Listen for storage changes and periodically refresh user data
+  useEffect(() => {
+    const handleStorageChange = () => {
+      // Re-fetch user data when localStorage changes (e.g., after login/logout)
+      const userId = localStorage.getItem('userId');
+      const authToken = localStorage.getItem('authToken');
+      
+      if (userId && authToken) {
+        fetchUserData();
+      } else {
+        // Clear user data if no auth info
+        setUserName('User Name');
+        setUserAvatar(null);
+        setCurrentRole('member');
+      }
+    };
+
+    // Listen for custom storage events (when localStorage is updated in same tab)
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check for updates periodically (for same-tab updates)
+    const interval = setInterval(() => {
+      const userId = localStorage.getItem('userId');
+      const authToken = localStorage.getItem('authToken');
+      
+      if (userId && authToken && !isLoadingUser) {
+        fetchUserData();
+      }
+    }, 30000); // Refresh every 30 seconds
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, [isLoadingUser]);
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     setShowLogoutModal(false);
@@ -61,7 +155,16 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
     // Clear any stored auth data (localStorage, cookies, etc.)
     if (typeof window !== 'undefined') {
       localStorage.removeItem('authToken');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userRole');
+      localStorage.removeItem('userAvatar'); // Remove old avatar reference
     }
+    
+    // Clear component state
+    setUserName('User Name');
+    setUserAvatar(null);
+    setCurrentRole('member');
     
     // Redirect to login page
     router.push('/auth/login');
@@ -117,6 +220,12 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
           href: '/team_leader/projects',
           roles: ['team_leader']
         },
+        {
+          icon: '👤',
+          label: 'Profile',
+          href: '/team_leader/profile',
+          roles: ['team_leader']
+        }
       ],
       member: [
         {
@@ -190,7 +299,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         <button
           onClick={() => setShowLogoutModal(true)}
           disabled={isLoggingOut}
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed neumorphic-button-hover"
+          className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed neumorphic-button-hover cursor-pointer"
         >
           <span className="text-xl group-hover:scale-110 transition-transform duration-200">
             {isLoggingOut ? '⏳' : '🚪'}
@@ -203,11 +312,35 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         {/* User Info */}
         <div className="bg-[var(--color-background)] rounded-xl p-4 section-neumorphic">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
-              U
-            </div>
+            {isLoadingUser ? (
+              <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
+            ) : userAvatar ? (
+              <Image
+                src={userAvatar}
+                alt={userName}
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full object-cover"
+                onError={() => {
+                  console.log('Avatar failed to load, falling back to initials');
+                  setUserAvatar(null);
+                }}
+                onLoadingComplete={(result) => {
+                  if (result.naturalWidth === 0) {
+                    console.log('Avatar loaded but invalid, falling back to initials');
+                    setUserAvatar(null);
+                  }
+                }}
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                {userName.charAt(0).toUpperCase()}
+              </div>
+            )}
             <div>
-              <p className="text-sm font-medium text-[var(--color-text-primary)]">{userName}</p>
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                {isLoadingUser ? 'Loading...' : userName}
+              </p>
               <p className="text-xs text-[var(--color-text-secondary)] capitalize">
                 {currentRole === 'admin' ? 'Quản trị viên' : 
                  currentRole === 'team_leader' ? 'Trưởng nhóm' : 'Thành viên'}

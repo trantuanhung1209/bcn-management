@@ -355,7 +355,7 @@ export default function ProjectDetailPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Project không tìm thấy</h1>
           <button
             onClick={() => router.push('/team_leader/projects')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200"
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
           >
             Quay lại danh sách Projects
           </button>
@@ -373,7 +373,7 @@ export default function ProjectDetailPage() {
             <div className="flex items-center gap-4 mb-2">
               <button
                 onClick={() => router.push('/team_leader/projects')}
-                className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+                className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors duration-200 cursor-pointer"
                 title="Quay lại"
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -434,7 +434,7 @@ export default function ProjectDetailPage() {
             </h2>
             <button
               onClick={() => setIsCreateTaskModalOpen(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -455,7 +455,7 @@ export default function ProjectDetailPage() {
               <p className="text-gray-500 mb-4">Tạo task đầu tiên để bắt đầu phân công công việc cho team</p>
               <button
                 onClick={() => setIsCreateTaskModalOpen(true)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200"
+                className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
               >
                 Tạo Task Đầu Tiên
               </button>
@@ -486,7 +486,7 @@ export default function ProjectDetailPage() {
                     <span className="text-xs text-gray-600">
                       👤 {task.assignedToName || 'Chưa gán'}
                     </span>
-                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium cursor-pointer">
                       Chi tiết
                     </button>
                   </div>
@@ -513,7 +513,7 @@ export default function ProjectDetailPage() {
                     type="text"
                     value={newTask.title}
                     onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     placeholder="Nhập tiêu đề task"
                   />
                 </div>
@@ -525,7 +525,7 @@ export default function ProjectDetailPage() {
                   <textarea
                     value={newTask.description}
                     onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input resize-none"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input resize-none"
                     rows={3}
                     placeholder="Nhập mô tả task"
                   />
@@ -539,7 +539,7 @@ export default function ProjectDetailPage() {
                     <select
                       value={newTask.priority}
                       onChange={(e) => setNewTask(prev => ({ ...prev, priority: e.target.value as any }))}
-                      className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                      className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     >
                       <option value="low">Thấp</option>
                       <option value="medium">Trung bình</option>
@@ -555,7 +555,7 @@ export default function ProjectDetailPage() {
                     <select
                       value={newTask.assignedTo}
                       onChange={(e) => setNewTask(prev => ({ ...prev, assignedTo: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                      className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                     >
                       <option value="">Chọn member (tùy chọn)</option>
                       {teamMembers.map(member => (
@@ -575,7 +575,7 @@ export default function ProjectDetailPage() {
                     type="date"
                     value={newTask.dueDate}
                     onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
+                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 neumorphic-input"
                   />
                 </div>
               </div>
@@ -583,13 +583,13 @@ export default function ProjectDetailPage() {
               <div className="flex space-x-3 mt-6">
                 <button
                   onClick={() => setIsCreateTaskModalOpen(false)}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   onClick={handleCreateTask}
-                  className="flex-1 py-3 px-4 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors duration-200"
+                  className="flex-1 py-3 px-4 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors duration-200 cursor-pointer"
                 >
                   Tạo Task
                 </button>

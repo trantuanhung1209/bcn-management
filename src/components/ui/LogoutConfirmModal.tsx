@@ -34,13 +34,13 @@ const LogoutConfirmModal: React.FC<LogoutConfirmModalProps> = ({
           <div className="flex space-x-3">
             <button
               onClick={onClose}
-              className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+              className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
             >
               Hủy
             </button>
             <button
               onClick={onConfirm}
-              className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors duration-200"
+              className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors duration-200 cursor-pointer"
             >
               Đăng xuất
             </button>

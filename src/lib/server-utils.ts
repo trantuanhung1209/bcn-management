@@ -4,6 +4,7 @@ import { ObjectId } from "mongodb"
 import { UserModel } from "@/models/User"
 import { TeamModel } from "@/models/Team"
 import { ProjectModel } from "@/models/Project"
+import { NextRequest } from "next/server"
 
 // Password hashing
 export const hashPassword = async (password: string): Promise<string> => {
@@ -153,6 +154,29 @@ export const filterUsersForManager = async (managerId: string, userRole: string,
   }
   
   return [];
+}
+
+// Get user from authorization token
+export const getUserFromToken = async (request: NextRequest): Promise<any | null> => {
+  try {
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return null;
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = verifyToken(token);
+    
+    if (!decoded || !decoded.userId) {
+      return null;
+    }
+
+    const user = await UserModel.findById(decoded.userId);
+    return user;
+  } catch (error) {
+    console.error('Token verification error:', error);
+    return null;
+  }
 }
 
 export const filterProjectsForManager = async (managerId: string, userRole: string, projects: any[]): Promise<any[]> => {

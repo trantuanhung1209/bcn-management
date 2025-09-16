@@ -1,4 +1,7 @@
 // Utility functions for authentication and session management
+import { NextRequest } from 'next/server';
+import { verifyToken } from '@/lib/auth';
+import { UserModel } from '@/models/User';
 
 export interface UserSession {
   id: string;
@@ -155,4 +158,54 @@ export function getManagerAccessibleTeams(managerId: string, allTeams: any[]): a
   }
   
   return [];
+}
+
+// Get user from token (server-side)
+export async function getUserFromToken(request: NextRequest): Promise<UserSession | null> {
+  try {
+    // Try to get token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      const decoded = verifyToken(token);
+      
+      // Get user from database
+      const user = await UserModel.findById(decoded.userId);
+      if (!user) return null;
+      
+      return {
+        id: user._id!.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        avatar: user.avatar
+      };
+    }
+
+    // Try to get token from cookies
+    const token = request.cookies.get('auth-token')?.value;
+    if (token) {
+      const decoded = verifyToken(token);
+      
+      // Get user from database
+      const user = await UserModel.findById(decoded.userId);
+      if (!user) return null;
+      
+      return {
+        id: user._id!.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        avatar: user.avatar
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return null;
+  }
 }

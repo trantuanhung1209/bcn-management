@@ -239,7 +239,7 @@ const LoginPage: React.FC = () => {
 
           {/* Social Login */}
           <div className="mt-6 space-y-3">
-            <button className="w-full py-3 px-4 rounded-xl bg-white text-gray-700 font-medium flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-sm border border-gray-200">
+            <button className="w-full py-3 px-4 rounded-xl bg-white text-gray-700 font-medium flex items-center justify-center space-x-2 hover:bg-gray-50 transition-colors duration-200 shadow-sm border border-gray-200 cursor-pointer">
               <span>🔍</span>
               <span>Đăng nhập với Google</span>
             </button>

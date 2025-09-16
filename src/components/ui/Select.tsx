@@ -18,7 +18,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         )}
         <select
           className={cn(
-            'w-full px-4 py-3 bg-white rounded-lg border-0 shadow-neumorphic-inset',
+            'w-full px-3 py-2 neumorphic-input bg-white rounded-lg border-0 shadow-neumorphic-inset',
             'focus:shadow-neumorphic-inset-focus focus:outline-none transition-all duration-200',
             'text-gray-700 cursor-pointer',
             error && 'shadow-red-200',

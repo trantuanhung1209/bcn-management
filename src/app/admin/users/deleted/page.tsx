@@ -236,7 +236,7 @@ ${nonAdminUsers.map(user => `• ${user.fullName || `${user.firstName} ${user.la
                   placeholder="Search by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="neumorphic-input w-full px-4 py-3 text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none"
+                  className="neumorphic-input w-full px-3 py-2 neumorphic-input text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none"
                 />
               </div>
               <div>
@@ -246,7 +246,7 @@ ${nonAdminUsers.map(user => `• ${user.fullName || `${user.firstName} ${user.la
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className="neumorphic-input w-full px-4 py-3 text-[var(--color-text-primary)] focus:outline-none"
+                  className="neumorphic-input w-full px-3 py-2 neumorphic-input text-[var(--color-text-primary)] focus:outline-none"
                 >
                   <option value="all">All Roles</option>
                   <option value="team_leader">Team Leader</option>
@@ -390,14 +390,14 @@ ${nonAdminUsers.map(user => `• ${user.fullName || `${user.firstName} ${user.la
                             <div className="flex justify-end space-x-2">
                               <button
                                 onClick={() => handleRestore(user._id)}
-                                className="px-3 py-1 text-sm rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
+                                className="px-3 py-1 text-sm rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors cursor-pointer"
                                 title="Khôi phục user"
                               >
                                 ♻️ Khôi phục
                               </button>
                               <button
                                 onClick={() => handlePermanentDelete(user._id)}
-                                className="px-3 py-1 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors"
+                                className="px-3 py-1 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors cursor-pointer"
                                 title="Xóa vĩnh viễn user"
                               >
                                 💀 Xóa vĩnh viễn

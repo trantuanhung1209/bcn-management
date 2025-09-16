@@ -15,7 +15,7 @@ export function Button({
   disabled,
   ...props 
 }: ButtonProps) {
-  const baseClasses = 'font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300';
+  const baseClasses = 'font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer';
   
   const variants = {
     primary: 'bg-blue-500 text-white shadow-neumorphic hover:shadow-neumorphic-hover active:shadow-neumorphic-pressed hover:bg-blue-600',

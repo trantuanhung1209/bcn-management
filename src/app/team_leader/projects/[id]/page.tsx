@@ -135,8 +135,8 @@ export default function ProjectDetailPage() {
           })) || [],
           tags: projectData.tags || [],
           coins: projectData.coins,
-          totalTasks: 0,
-          completedTasks: 0,
+          totalTasks: projectData.totalTasks || 0,
+          completedTasks: projectData.completedTasks || 0,
           isAssigned: projectData.isAssigned || false,
           manager: projectData.manager,
           managerName: projectData.manager ? 'Manager Name' : undefined,
@@ -175,10 +175,16 @@ export default function ProjectDetailPage() {
         
         setTasks(transformedTasks);
         
-        // Update project task counts - but don't cause re-render loop
+        // Only update project task counts if not already set from API
         setProject(prev => {
           if (!prev) return null;
           
+          // If API already provided task statistics, don't override them
+          if (prev.totalTasks > 0 || prev.completedTasks > 0) {
+            return prev; // Keep existing stats from API
+          }
+          
+          // Fallback: calculate from frontend if API didn't provide stats
           const totalTasks = transformedTasks.length;
           const completedTasks = transformedTasks.filter((task: Task) => task.status === 'completed').length;
           const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -260,9 +266,9 @@ export default function ProjectDetailPage() {
         });
         setIsCreateTaskModalOpen(false);
         
-        // Refresh tasks list
+        // Refresh tasks list and project data to update overview stats
         fetchTasks();
-        alert('Tạo task thành công!');
+        fetchProject(); // Update project overview with new task count
       } else {
         alert(result.error || 'Failed to create task');
       }
@@ -319,8 +325,9 @@ export default function ProjectDetailPage() {
         setIsEditTaskModalOpen(false);
         setEditingTask(null);
         
-        // Refresh tasks list
+        // Refresh tasks list and project data to update overview stats
         fetchTasks();
+        fetchProject(); // Update project overview with potentially changed task status
         alert('Cập nhật task thành công!');
       } else {
         alert(result.error || 'Failed to update task');
@@ -353,9 +360,10 @@ export default function ProjectDetailPage() {
         setIsDeleteModalOpen(false);
         setTaskToDelete(null);
         
-        // Refresh tasks list and history
+        // Refresh tasks list, history and project data to update overview stats
         fetchTasks();
         fetchTaskHistory();
+        fetchProject(); // Update project overview with reduced task count
         alert('Xóa task thành công!');
       } else {
         alert(result.error || 'Failed to delete task');
@@ -387,7 +395,7 @@ export default function ProjectDetailPage() {
     setIsLoading(false);
   }, [project]);
 
-  if (isLoading) {
+  if (isLoading || !project) {
     return (
       <MainLayout userRole="team_leader">
         <div className="flex items-center justify-center h-64">
@@ -397,76 +405,132 @@ export default function ProjectDetailPage() {
     );
   }
 
-  if (!project) {
-    return (
-      <MainLayout userRole="team_leader">
-        <div className="text-center py-12">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Project không tìm thấy</h1>
-          <button
-            onClick={() => router.push('/team_leader/projects')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors duration-200"
-          >
-            Quay lại danh sách Projects
-          </button>
-        </div>
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout userRole="team_leader">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="flex items-center gap-4 mb-2">
-              <button
-                onClick={() => router.push('/team_leader/projects')}
-                className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
-                title="Quay lại"
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <h1 className="text-3xl font-bold text-[var(--color-text-primary)]">
-                {project.name}
-              </h1>
-            </div>
-            <p className="text-[var(--color-text-secondary)]">
-              {project.description}
-            </p>
-          </div>
-        </div>
+        <div className="section-neumorphic bg-white rounded-2xl border border-gray-100/50 p-6 mb-6">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              {/* Breadcrumb & Back Button */}
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={() => router.push('/team_leader/projects')}
+                  className="group flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition-all duration-200 border border-gray-200/50 hover:border-blue-200/50 cursor-pointer"
+                  title="Quay lại danh sách projects"
+                >
+                  <svg className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="text-sm font-medium">Quay lại</span>
+                </button>
+                
+                {/* Breadcrumb */}
+                <div className="flex items-center text-sm text-gray-500">
+                  <span>Projects</span>
+                  <svg className="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                  <span className="text-blue-600 font-medium truncate max-w-xs">{project.name}</span>
+                </div>
+              </div>
 
-        {/* Project Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div key="progress-card" className="section-neumorphic bg-white rounded-2xl border border-blue-100/50 p-6">
-            <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">Tiến độ</h3>
-            <p className="text-3xl font-bold text-blue-600 mb-2">{project.progress}%</p>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${project.progress}%` }}
-              ></div>
+              {/* Project Title & Info */}
+              <div className="space-y-3">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+                  {project.name}
+                </h1>
+                
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* Status Badge */}
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    project.status === 'completed' ? 'bg-green-100 text-green-700 border border-green-200' :
+                    project.status === 'in_progress' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                    project.status === 'planning' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                    project.status === 'testing' ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                    project.status === 'on_hold' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                    'bg-gray-100 text-gray-700 border border-gray-200'
+                  }`}>
+                    <div className={`w-2 h-2 rounded-full mr-2 ${
+                      project.status === 'completed' ? 'bg-green-500' :
+                      project.status === 'in_progress' ? 'bg-blue-500' :
+                      project.status === 'planning' ? 'bg-purple-500' :
+                      project.status === 'testing' ? 'bg-orange-500' :
+                      project.status === 'on_hold' ? 'bg-yellow-500' :
+                      'bg-gray-500'
+                    }`} />
+                    {project.status === 'planning' ? 'Lên kế hoạch' :
+                     project.status === 'in_progress' ? 'Đang thực hiện' :
+                     project.status === 'testing' ? 'Đang test' :
+                     project.status === 'completed' ? 'Hoàn thành' :
+                     project.status === 'on_hold' ? 'Tạm dừng' :
+                     'Đã hủy'}
+                  </span>
+
+                  {/* Priority Badge */}
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${
+                    project.priority === 'urgent' ? 'bg-red-50 text-red-700 border-red-200' :
+                    project.priority === 'high' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                    project.priority === 'medium' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
+                    'bg-green-50 text-green-700 border-green-200'
+                  }`}>
+                    {project.priority === 'urgent' ? '🔴 Khẩn cấp' :
+                     project.priority === 'high' ? '🟠 Cao' :
+                     project.priority === 'medium' ? '🟡 Trung bình' :
+                     '🟢 Thấp'}
+                  </span>
+
+                  {/* Project Dates */}
+                  <div className="flex items-center text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-lg border border-gray-200">
+                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>{project.startDate}</span>
+                    {project.endDate && (
+                      <>
+                        <span className="mx-2">→</span>
+                        <span>{project.endDate}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Description */}
+                {project.description && (
+                  <p className="text-gray-600 leading-relaxed bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+                    {project.description}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-          
-          <div key="tasks-card" className="section-neumorphic bg-white rounded-2xl border border-green-100/50 p-6">
-            <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">Tasks hoàn thành</h3>
-            <p className="text-3xl font-bold text-green-600">{project.completedTasks}</p>
-            <p className="text-sm text-gray-500">/ {project.totalTasks} tasks</p>
-          </div>
-          
-          <div key="coins-card" className="section-neumorphic bg-white rounded-2xl border border-yellow-100/50 p-6">
-            <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">Coins</h3>
-            <p className="text-3xl font-bold text-yellow-600">{project.coins}</p>
-          </div>
-          
-          <div key="team-card" className="section-neumorphic bg-white rounded-2xl border border-purple-100/50 p-6">
-            <h3 className="text-sm font-medium text-[var(--color-text-secondary)] mb-2">Team</h3>
-            <p className="text-lg font-bold text-purple-600">{project.teamName}</p>
-            <p className="text-sm text-gray-500">{teamMembers.length} thành viên</p>
+
+            {/* Quick Stats Card */}
+            <div className="ml-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-4 border border-blue-100 min-w-[200px]">
+              <h3 className="text-sm font-semibold text-blue-900 mb-3 flex items-center">
+                <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Tổng quan
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Tiến độ</span>
+                  <span className="text-sm font-bold text-blue-600">{project.progress}%</span>
+                </div>
+                <div className="w-full bg-blue-100 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${project.progress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between items-center pt-1">
+                  <span className="text-sm text-gray-600">Tasks</span>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {project.completedTasks}/{project.totalTasks}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -477,7 +541,7 @@ export default function ProjectDetailPage() {
             <div className="flex space-x-6">
               <button
                 onClick={() => setActiveTab('tasks')}
-                className={`px-4 py-2 font-medium transition-colors duration-200 ${
+                className={`px-4 py-2 font-medium transition-colors duration-200 cursor-pointer ${
                   activeTab === 'tasks'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-600 hover:text-blue-600'
@@ -487,7 +551,7 @@ export default function ProjectDetailPage() {
               </button>
               <button
                 onClick={() => setActiveTab('history')}
-                className={`px-4 py-2 font-medium transition-colors duration-200 ${
+                className={`px-4 py-2 font-medium transition-colors duration-200 cursor-pointer ${
                   activeTab === 'history'
                     ? 'text-blue-600 border-b-2 border-blue-600'
                     : 'text-gray-600 hover:text-blue-600'
@@ -592,7 +656,7 @@ export default function ProjectDetailPage() {
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEditTask(task)}
-                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
+                              className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150 cursor-pointer"
                               title="Chỉnh sửa"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -601,7 +665,7 @@ export default function ProjectDetailPage() {
                             </button>
                             <button
                               onClick={() => handleDeleteTask(task)}
-                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150"
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150 cursor-pointer"
                               title="Xóa"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -722,7 +786,7 @@ export default function ProjectDetailPage() {
               <h3 className="text-xl font-bold text-gray-900">Tạo Task Mới</h3>
               <button
                 onClick={() => setIsCreateTaskModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -740,7 +804,7 @@ export default function ProjectDetailPage() {
                   type="text"
                   value={newTask.title}
                   onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   placeholder="Nhập tiêu đề task..."
                 />
               </div>
@@ -753,7 +817,7 @@ export default function ProjectDetailPage() {
                 <textarea
                   value={newTask.description}
                   onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 h-24 resize-none"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 h-24 resize-none"
                   placeholder="Mô tả chi tiết task..."
                 />
               </div>
@@ -766,7 +830,7 @@ export default function ProjectDetailPage() {
                 <select
                   value={newTask.priority}
                   onChange={(e) => setNewTask({ ...newTask, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 >
                   <option value="low">Thấp</option>
                   <option value="medium">Trung bình</option>
@@ -783,7 +847,7 @@ export default function ProjectDetailPage() {
                 <select
                   value={newTask.assignedTo}
                   onChange={(e) => setNewTask({ ...newTask, assignedTo: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 >
                   <option key="unassigned" value="">Chưa gán</option>
                   {teamMembers.map((member) => (
@@ -803,7 +867,7 @@ export default function ProjectDetailPage() {
                   type="date"
                   value={newTask.dueDate}
                   onChange={(e) => setNewTask({ ...newTask, dueDate: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 />
               </div>
 
@@ -816,7 +880,7 @@ export default function ProjectDetailPage() {
                   type="number"
                   value={newTask.estimatedHours}
                   onChange={(e) => setNewTask({ ...newTask, estimatedHours: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   placeholder="Nhập số giờ..."
                   min="1"
                 />
@@ -827,14 +891,14 @@ export default function ProjectDetailPage() {
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={() => setIsCreateTaskModalOpen(false)}
-                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 onClick={handleCreateTask}
                 disabled={!newTask.title.trim()}
-                className="flex-1 py-3 px-4 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+                className="flex-1 py-3 px-4 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer"
               >
                 Tạo Task
               </button>
@@ -851,7 +915,7 @@ export default function ProjectDetailPage() {
               <h3 className="text-xl font-bold text-gray-900">Chỉnh sửa Task</h3>
               <button
                 onClick={() => setIsEditTaskModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -869,7 +933,7 @@ export default function ProjectDetailPage() {
                   type="text"
                   value={editTask.title}
                   onChange={(e) => setEditTask({ ...editTask, title: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   placeholder="Nhập tiêu đề task..."
                 />
               </div>
@@ -882,7 +946,7 @@ export default function ProjectDetailPage() {
                 <textarea
                   value={editTask.description}
                   onChange={(e) => setEditTask({ ...editTask, description: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 h-24 resize-none"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 h-24 resize-none"
                   placeholder="Mô tả chi tiết task..."
                 />
               </div>
@@ -895,7 +959,7 @@ export default function ProjectDetailPage() {
                 <select
                   value={editTask.status}
                   onChange={(e) => setEditTask({ ...editTask, status: e.target.value as 'todo' | 'in_progress' | 'completed' | 'cancelled' })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 >
                   <option value="todo">Chưa bắt đầu</option>
                   <option value="in_progress">Đang thực hiện</option>
@@ -912,7 +976,7 @@ export default function ProjectDetailPage() {
                 <select
                   value={editTask.priority}
                   onChange={(e) => setEditTask({ ...editTask, priority: e.target.value as 'low' | 'medium' | 'high' | 'urgent' })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 >
                   <option value="low">Thấp</option>
                   <option value="medium">Trung bình</option>
@@ -929,7 +993,7 @@ export default function ProjectDetailPage() {
                 <select
                   value={editTask.assignedTo}
                   onChange={(e) => setEditTask({ ...editTask, assignedTo: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 >
                   <option key="unassigned" value="">Chưa gán</option>
                   {teamMembers.map((member) => (
@@ -949,7 +1013,7 @@ export default function ProjectDetailPage() {
                   type="date"
                   value={editTask.dueDate}
                   onChange={(e) => setEditTask({ ...editTask, dueDate: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-inputrounded-xl bg-gray-50 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                 />
               </div>
 
@@ -962,7 +1026,7 @@ export default function ProjectDetailPage() {
                   type="number"
                   value={editTask.estimatedHours}
                   onChange={(e) => setEditTask({ ...editTask, estimatedHours: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
+                  className="w-full px-3 py-2 neumorphic-input rounded-xl bg-gray-50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                   placeholder="Nhập số giờ..."
                   min="1"
                 />
@@ -973,14 +1037,14 @@ export default function ProjectDetailPage() {
             <div className="flex space-x-3 mt-6">
               <button
                 onClick={() => setIsEditTaskModalOpen(false)}
-                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200"
+                className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
               >
                 Hủy
               </button>
               <button
                 onClick={handleUpdateTask}
                 disabled={!editTask.title.trim()}
-                className="flex-1 py-3 px-4 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200"
+                className="flex-1 py-3 px-4 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer"
               >
                 Cập nhật
               </button>
@@ -997,7 +1061,7 @@ export default function ProjectDetailPage() {
               <h3 className="text-xl font-bold text-gray-900">Xác nhận xóa</h3>
               <button
                 onClick={() => setIsDeleteModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                className="text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1023,7 +1087,7 @@ export default function ProjectDetailPage() {
               </button>
               <button
                 onClick={confirmDeleteTask}
-                className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors duration-200"
+                className="flex-1 py-3 px-4 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors duration-200 cursor-pointer"
               >
                 Xóa
               </button>

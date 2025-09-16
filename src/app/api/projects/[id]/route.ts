@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProjectModel } from '@/models/Project';
+import { TaskModel } from '@/models/Task';
 import { ObjectId } from 'mongodb';
+import { TaskStatus } from '@/types';
 
 // GET: Get project by ID
 export async function GET(
@@ -26,10 +28,48 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: project
-    });
+    // Get task statistics for this project
+    try {
+      const tasks = await TaskModel.findByProject(id);
+      const totalTasks = tasks.length;
+      // Check for 'done' status from database
+      const completedTasks = tasks.filter(task => 
+        task.status === TaskStatus.DONE
+      ).length;
+      const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+      console.log(`📊 Project ${id} task stats:`, {
+        totalTasks,
+        completedTasks,
+        progress,
+        taskStatuses: tasks.map(t => ({ title: t.title, status: t.status }))
+      });
+
+      // Add task statistics to project data
+      const projectWithStats = {
+        ...project,
+        totalTasks,
+        completedTasks,
+        progress
+      };
+
+      return NextResponse.json({
+        success: true,
+        data: projectWithStats
+      });
+    } catch (taskError) {
+      console.warn('Error fetching task statistics:', taskError);
+      // Return project without task stats if task fetching fails
+      return NextResponse.json({
+        success: true,
+        data: {
+          ...project,
+          totalTasks: 0,
+          completedTasks: 0,
+          progress: 0
+        }
+      });
+    }
   } catch (error) {
     console.error('Error fetching project:', error);
     return NextResponse.json(

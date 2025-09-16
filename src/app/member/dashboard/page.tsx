@@ -2,78 +2,330 @@
 
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
+import { TaskStatus, TaskPriority } from '@/types';
+
+interface TaskData {
+  _id: string;
+  title: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  progress: number;
+  dueDate?: Date;
+  project: string;
+}
+
+interface ActivityData {
+  _id: string;
+  title: string;
+  action: string;
+  project: string;
+  updatedAt: Date;
+  progress: number;
+}
+
+interface ProjectData {
+  _id: string;
+  name: string;
+  status: string;
+  progress: number;
+  deadline?: Date;
+  priority: TaskPriority;
+}
+
+interface DashboardData {
+  user: {
+    name: string;
+    email: string;
+    role: string;
+    avatar?: string;
+  };
+  team: {
+    name: string;
+    description: string;
+    memberCount: number;
+    projectCount: number;
+  } | null;
+  stats: {
+    assignedTasks: number;
+    completedTasks: number;
+    inProgressTasks: number;
+    pendingTasks: number;
+    overdueTasks: number;
+  };
+  performance: {
+    completedThisMonth: number;
+    monthlyGrowthPercentage: number;
+    averageCompletionDays: number;
+    averageRating: number;
+  };
+  todayTasks: TaskData[];
+  recentActivity: ActivityData[];
+  projects: ProjectData[];
+}
 
 const MemberDashboardPage: React.FC = () => {
-  const [userName, setUserName] = useState('Member');
-  const [userTeam, setUserTeam] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [memberStats, setMemberStats] = useState({
-    assignedTasks: 0,
-    completedTasks: 0,
-    inProgressTasks: 0,
-    pendingTasks: 0,
-    teamName: '',
-    teamColor: 'from-blue-500 to-cyan-500',
-    teamIcon: '🏢'
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
   useEffect(() => {
-    // Get user data from localStorage
-    if (typeof window !== 'undefined') {
-      const storedUserName = localStorage.getItem('userName') || 'Member';
-      const storedUserTeam = localStorage.getItem('userTeam') || '';
-      setUserName(storedUserName);
-      setUserTeam(storedUserTeam);
-    }
+    fetchDashboardData();
+  }, []);
 
-    // Simulate fetching member stats
-    const fetchMemberStats = async () => {
+  const fetchDashboardData = async () => {
+    try {
       setIsLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setError(null);
       
-      // Get team-specific data
-      if (userTeam === 'web') {
-        setMemberStats({
-          assignedTasks: 8,
-          completedTasks: 15,
-          inProgressTasks: 3,
-          pendingTasks: 5,
-          teamName: 'Team Web Development',
-          teamColor: 'from-blue-500 to-cyan-500',
-          teamIcon: '🌐'
-        });
-      } else if (userTeam === 'app') {
-        setMemberStats({
-          assignedTasks: 6,
-          completedTasks: 12,
-          inProgressTasks: 2,
-          pendingTasks: 4,
-          teamName: 'Team Mobile App',
-          teamColor: 'from-green-500 to-emerald-500',
-          teamIcon: '📱'
-        });
-      } else {
-        setMemberStats({
-          assignedTasks: 7,
-          completedTasks: 13,
-          inProgressTasks: 2,
-          pendingTasks: 5,
-          teamName: 'Team Development',
-          teamColor: 'from-purple-500 to-pink-500',
-          teamIcon: '🏢'
-        });
-      }
-      setIsLoading(false);
-    };
+      const response = await fetch('/api/member/dashboard', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add authorization header if you have token stored
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+        },
+        credentials: 'include'
+      });
 
-    fetchMemberStats();
-  }, [userTeam]);
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to load dashboard');
+      }
+
+      setDashboardData(result.data);
+      console.log('Dashboard data:', result.data);
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getPriorityColor = (priority: TaskPriority) => {
+    switch (priority) {
+      case 'urgent': return 'bg-red-100 text-red-800';
+      case 'high': return 'bg-red-100 text-red-800';
+      case 'medium': return 'bg-yellow-100 text-yellow-800';
+      case 'low': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-500';
+      case 'in_progress': return 'bg-blue-500';
+      case 'testing': return 'bg-purple-500';
+      case 'planning': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
+    }
+  };
+
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return 'Không có deadline';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const now = new Date();
+    const diffDays = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Hôm nay';
+    if (diffDays === 1) return 'Ngày mai';
+    if (diffDays === -1) return 'Hôm qua';
+    if (diffDays > 0) return `${diffDays} ngày nữa`;
+    return `Quá hạn ${Math.abs(diffDays)} ngày`;
+  };
+
+  const getTimeAgo = (date: Date | string) => {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    const now = new Date();
+    const diffHours = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60));
+    
+    if (diffHours < 1) return 'Vừa xong';
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} ngày trước`;
+  };
+
+  const updateTaskProgress = async (taskId: string, newProgress: number) => {
+    try {
+      // Optimistic update - update UI immediately
+      setDashboardData(prev => {
+        if (!prev) return prev;
+        
+        return {
+          ...prev,
+          todayTasks: prev.todayTasks.map(task => 
+            task._id === taskId 
+              ? { ...task, progress: newProgress }
+              : task
+          ),
+          // Also update stats if task reaches 100%
+          stats: {
+            ...prev.stats,
+            completedTasks: newProgress === 100 && prev.todayTasks.find(t => t._id === taskId)?.progress !== 100
+              ? prev.stats.completedTasks + 1
+              : newProgress < 100 && prev.todayTasks.find(t => t._id === taskId)?.progress === 100
+              ? prev.stats.completedTasks - 1
+              : prev.stats.completedTasks,
+            inProgressTasks: newProgress > 0 && newProgress < 100 && 
+              (prev.todayTasks.find(t => t._id === taskId)?.progress === 0 || 
+               prev.todayTasks.find(t => t._id === taskId)?.progress === 100)
+              ? prev.stats.inProgressTasks + 1
+              : (newProgress === 0 || newProgress === 100) &&
+                prev.todayTasks.find(t => t._id === taskId)?.progress !== undefined &&
+                prev.todayTasks.find(t => t._id === taskId)!.progress > 0 &&
+                prev.todayTasks.find(t => t._id === taskId)!.progress < 100
+              ? prev.stats.inProgressTasks - 1
+              : prev.stats.inProgressTasks
+          }
+        };
+      });
+
+      // Send API request in background
+      const response = await fetch(`/api/member/tasks/${taskId}/progress`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({ progress: newProgress })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update task progress');
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update progress');
+      }
+
+      // Optionally sync with server data if needed
+      // await fetchDashboardData();
+      
+    } catch (err) {
+      console.error('Update progress error:', err);
+      
+      // Revert optimistic update on error
+      await fetchDashboardData();
+      alert('Có lỗi xảy ra khi cập nhật tiến độ. Đã khôi phục dữ liệu.');
+    }
+  };
+
+  const updateTaskStatus = async (taskId: string, status: TaskStatus) => {
+    try {
+      // Get current task for optimistic update
+      const currentTask = dashboardData?.todayTasks.find(t => t._id === taskId);
+      if (!currentTask) return;
+      
+      // Optimistic update - update UI immediately
+      setDashboardData(prev => {
+        if (!prev) return prev;
+        
+        const updatedProgress = status === TaskStatus.DONE ? 100 : currentTask.progress;
+        
+        return {
+          ...prev,
+          todayTasks: prev.todayTasks.map(task => 
+            task._id === taskId 
+              ? { ...task, status, progress: updatedProgress }
+              : task
+          ),
+          // Update stats based on status change
+          stats: {
+            ...prev.stats,
+            completedTasks: status === TaskStatus.DONE && currentTask.status !== TaskStatus.DONE
+              ? prev.stats.completedTasks + 1
+              : status !== TaskStatus.DONE && currentTask.status === TaskStatus.DONE
+              ? prev.stats.completedTasks - 1
+              : prev.stats.completedTasks,
+            inProgressTasks: status === TaskStatus.IN_PROGRESS && currentTask.status !== TaskStatus.IN_PROGRESS
+              ? prev.stats.inProgressTasks + 1
+              : status !== TaskStatus.IN_PROGRESS && currentTask.status === TaskStatus.IN_PROGRESS
+              ? prev.stats.inProgressTasks - 1
+              : prev.stats.inProgressTasks,
+            pendingTasks: status === TaskStatus.TODO && currentTask.status !== TaskStatus.TODO
+              ? prev.stats.pendingTasks + 1
+              : status !== TaskStatus.TODO && currentTask.status === TaskStatus.TODO
+              ? prev.stats.pendingTasks - 1
+              : prev.stats.pendingTasks
+          }
+        };
+      });
+
+      // Send API request in background
+      const response = await fetch(`/api/member/tasks/${taskId}/progress`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update task status');
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update status');
+      }
+
+      // Optionally sync with server data if needed
+      // await fetchDashboardData();
+      
+    } catch (err) {
+      console.error('Update status error:', err);
+      
+      // Revert optimistic update on error
+      await fetchDashboardData();
+      alert('Có lỗi xảy ra khi cập nhật trạng thái. Đã khôi phục dữ liệu.');
+    }
+  };
 
   if (isLoading) {
     return (
       <MainLayout userRole="member">
         <div className="flex items-center justify-center h-64">
           <div className="w-8 h-8 border-4 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout userRole="member">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-red-600 text-lg mb-4">{error}</p>
+            <button 
+              onClick={fetchDashboardData}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 cursor-pointer"
+            >
+              Thử lại
+            </button>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <MainLayout userRole="member">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Không có dữ liệu</p>
         </div>
       </MainLayout>
     );
@@ -88,7 +340,7 @@ const MemberDashboardPage: React.FC = () => {
             My Dashboard
           </h1>
           <p className="text-[var(--color-text-secondary)] mt-1">
-            Chào mừng {userName}! Theo dõi công việc và tiến độ của bạn.
+            Chào mừng {dashboardData.user.name}! Theo dõi công việc và tiến độ của bạn.
           </p>
         </div>
 
@@ -101,7 +353,7 @@ const MemberDashboardPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {memberStats.assignedTasks}
+                  {dashboardData.stats.assignedTasks}
                 </p>
                 <p className="text-[var(--color-text-secondary)] text-sm">Tasks được giao</p>
               </div>
@@ -115,7 +367,7 @@ const MemberDashboardPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {memberStats.completedTasks}
+                  {dashboardData.stats.completedTasks}
                 </p>
                 <p className="text-[var(--color-text-secondary)] text-sm">Tasks hoàn thành</p>
               </div>
@@ -129,7 +381,7 @@ const MemberDashboardPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {memberStats.inProgressTasks}
+                  {dashboardData.stats.inProgressTasks}
                 </p>
                 <p className="text-[var(--color-text-secondary)] text-sm">Đang thực hiện</p>
               </div>
@@ -143,7 +395,7 @@ const MemberDashboardPage: React.FC = () => {
               </div>
               <div>
                 <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                  {memberStats.pendingTasks}
+                  {dashboardData.stats.pendingTasks}
                 </p>
                 <p className="text-[var(--color-text-secondary)] text-sm">Chờ xử lý</p>
               </div>
@@ -155,67 +407,54 @@ const MemberDashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="section-neumorphic p-6">
             <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">
-              Tasks cần làm hôm nay
+              Tasks cần làm
             </h2>
             <div className="space-y-4">
-              {[
-                {
-                  title: 'Hoàn thành Login Component',
-                  project: 'E-commerce Platform',
-                  priority: 'High',
-                  deadline: 'Hôm nay',
-                  status: 'in-progress',
-                  icon: '🔧'
-                },
-                {
-                  title: 'Review API Documentation',
-                  project: 'Mobile App Redesign',
-                  priority: 'Medium',
-                  deadline: 'Ngày mai',
-                  status: 'pending',
-                  icon: '📖'
-                },
-                {
-                  title: 'Fix Button Styling Issues',
-                  project: 'Dashboard UI',
-                  priority: 'Low',
-                  deadline: '2 ngày nữa',
-                  status: 'pending',
-                  icon: '🎨'
-                },
-                {
-                  title: 'Write Unit Tests',
-                  project: 'API Integration',
-                  priority: 'High',
-                  deadline: '3 ngày nữa',
-                  status: 'pending',
-                  icon: '🧪'
-                }
-              ].map((task, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-white rounded-lg">
-                  <span className="text-2xl">{task.icon}</span>
-                  <div className="flex-1">
-                    <p className="text-[var(--color-text-primary)] font-medium">
-                      {task.title}
-                    </p>
-                    <p className="text-[var(--color-text-secondary)] text-sm">
-                      {task.project}
-                    </p>
+              {dashboardData.todayTasks.length > 0 ? (
+                dashboardData.todayTasks.map((task) => (
+                  <div key={task._id} className="flex items-center space-x-3 p-3 bg-white rounded-lg">
+                    <span className="text-2xl">📋</span>
+                    <div className="flex-1">
+                      <p className="text-[var(--color-text-primary)] font-medium">
+                        {task.title}
+                      </p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <p className="text-[var(--color-text-secondary)] text-sm">
+                          Progress: {task.progress}%
+                        </p>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => updateTaskProgress(task._id, Math.min(100, task.progress + 10))}
+                            className="text-xs px-2 py-1 bg-green-100 text-green-600 rounded hover:bg-green-200 cursor-pointer"
+                          >
+                            +10%
+                          </button>
+                          {task.progress < 100 && (
+                            <button
+                              onClick={() => updateTaskStatus(task._id, TaskStatus.DONE)}
+                              className="text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 cursor-pointer"
+                            >
+                              Complete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(task.priority)}`}>
+                        {task.priority}
+                      </span>
+                      <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                        {formatDate(task.dueDate)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      task.priority === 'High' ? 'bg-red-100 text-red-800' :
-                      task.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
-                      {task.priority}
-                    </span>
-                    <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                      {task.deadline}
-                    </p>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-[var(--color-text-secondary)]">Không có task nào cần làm</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -224,51 +463,31 @@ const MemberDashboardPage: React.FC = () => {
               Hoạt động gần đây
             </h2>
             <div className="space-y-4">
-              {[
-                {
-                  action: 'Hoàn thành task Database Schema',
-                  project: 'E-commerce Platform',
-                  time: '2 giờ trước',
-                  icon: '✅',
-                  type: 'completed'
-                },
-                {
-                  action: 'Cập nhật progress Dashboard UI',
-                  project: 'Admin Panel',
-                  time: '4 giờ trước',
-                  icon: '📊',
-                  type: 'progress'
-                },
-                {
-                  action: 'Comment trên task API Integration',
-                  project: 'Mobile App',
-                  time: '6 giờ trước',
-                  icon: '💬',
-                  type: 'comment'
-                },
-                {
-                  action: 'Submit code review request',
-                  project: 'Dashboard UI',
-                  time: '1 ngày trước',
-                  icon: '👀',
-                  type: 'review'
-                }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 bg-white rounded-lg">
-                  <span className="text-2xl">{activity.icon}</span>
-                  <div className="flex-1">
-                    <p className="text-[var(--color-text-primary)] font-medium">
-                      {activity.action}
-                    </p>
-                    <p className="text-[var(--color-text-secondary)] text-sm">
-                      {activity.project}
-                    </p>
+              {dashboardData.recentActivity.length > 0 ? (
+                dashboardData.recentActivity.map((activity) => (
+                  <div key={activity._id} className="flex items-center space-x-3 p-3 bg-white rounded-lg">
+                    <span className="text-2xl">
+                      {activity.action === 'completed' ? '✅' : 
+                       activity.action === 'updated' ? '📊' : '💬'}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-[var(--color-text-primary)] font-medium">
+                        {activity.action === 'completed' ? 'Hoàn thành' : 'Cập nhật'} {activity.title}
+                      </p>
+                      <p className="text-[var(--color-text-secondary)] text-sm">
+                        Progress: {activity.progress}%
+                      </p>
+                    </div>
+                    <span className="text-[var(--color-text-secondary)] text-xs">
+                      {getTimeAgo(activity.updatedAt)}
+                    </span>
                   </div>
-                  <span className="text-[var(--color-text-secondary)] text-xs">
-                    {activity.time}
-                  </span>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-[var(--color-text-secondary)]">Chưa có hoạt động gần đây</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -280,34 +499,38 @@ const MemberDashboardPage: React.FC = () => {
               Team của tôi
             </h2>
             <div className="bg-white p-4 rounded-lg">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className={`w-12 h-12 bg-gradient-to-r ${memberStats.teamColor} rounded-xl flex items-center justify-center`}>
-                  <span className="text-white text-xl">{memberStats.teamIcon}</span>
+              {dashboardData.team ? (
+                <>
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                      <span className="text-white text-xl">👥</span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                        {dashboardData.team.name}
+                      </h3>
+                      <p className="text-[var(--color-text-secondary)] text-sm">
+                        {dashboardData.team.description}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--color-text-secondary)]">Thành viên</span>
+                      <span className="text-[var(--color-text-primary)] font-medium">{dashboardData.team.memberCount} người</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[var(--color-text-secondary)]">Dự án đang chạy</span>
+                      <span className="text-[var(--color-text-primary)] font-medium">{dashboardData.team.projectCount} dự án</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-[var(--color-text-secondary)]">Chưa thuộc team nào</p>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                    {memberStats.teamName || 'Team Development'}
-                  </h3>
-                  <p className="text-[var(--color-text-secondary)] text-sm">
-                    Nhóm phát triển sản phẩm
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-[var(--color-text-secondary)]">Team Lead</span>
-                  <span className="text-[var(--color-text-primary)] font-medium">Nguyễn Văn Manager</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[var(--color-text-secondary)]">Thành viên</span>
-                  <span className="text-[var(--color-text-primary)] font-medium">6 người</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[var(--color-text-secondary)]">Dự án đang chạy</span>
-                  <span className="text-[var(--color-text-primary)] font-medium">3 dự án</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -316,59 +539,43 @@ const MemberDashboardPage: React.FC = () => {
               Dự án đang tham gia
             </h2>
             <div className="space-y-3">
-              {[
-                {
-                  name: 'E-commerce Platform',
-                  role: 'Frontend Developer',
-                  progress: 75,
-                  status: 'On Track',
-                  color: 'bg-green-500'
-                },
-                {
-                  name: 'Mobile App Redesign',
-                  role: 'UI Developer',
-                  progress: 45,
-                  status: 'In Progress',
-                  color: 'bg-blue-500'
-                },
-                {
-                  name: 'Dashboard UI Update',
-                  role: 'React Developer',
-                  progress: 90,
-                  status: 'Almost Done',
-                  color: 'bg-purple-500'
-                }
-              ].map((project, index) => (
-                <div key={index} className="bg-white p-3 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-[var(--color-text-primary)]">
-                      {project.name}
-                    </h3>
-                    <span className={`px-2 py-1 rounded-full text-xs text-white ${project.color}`}>
-                      {project.status}
-                    </span>
+              {dashboardData.projects.length > 0 ? (
+                dashboardData.projects.map((project) => (
+                  <div key={project._id} className="bg-white p-3 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium text-[var(--color-text-primary)]">
+                        {project.name}
+                      </h3>
+                      <span className={`px-2 py-1 rounded-full text-xs text-white ${getStatusColor(project.status)}`}>
+                        {project.status}
+                      </span>
+                    </div>
+                    <p className="text-sm text-[var(--color-text-secondary)] mb-2">
+                      Priority: {project.priority}
+                    </p>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-[var(--color-text-secondary)]">Progress</span>
+                      <span className="text-[var(--color-text-primary)] font-medium">{project.progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${getStatusColor(project.status)}`}
+                        style={{ width: `${project.progress}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <p className="text-sm text-[var(--color-text-secondary)] mb-2">
-                    Vai trò: {project.role}
-                  </p>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-[var(--color-text-secondary)]">Progress</span>
-                    <span className="text-[var(--color-text-primary)] font-medium">{project.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${project.color}`}
-                      style={{ width: `${project.progress}%` }}
-                    ></div>
-                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-[var(--color-text-secondary)]">Chưa tham gia dự án nào</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
 
         {/* Quick Member Actions */}
-        <div className="section-neumorphic p-6">
+        {/* <div className="section-neumorphic p-6">
           <h2 className="text-xl font-semibold text-[var(--color-text-primary)] mb-4">
             Thao tác nhanh
           </h2>
@@ -390,7 +597,7 @@ const MemberDashboardPage: React.FC = () => {
               <span>Profile</span>
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Performance Overview */}
         <div className="section-neumorphic p-6">
@@ -403,8 +610,13 @@ const MemberDashboardPage: React.FC = () => {
                 <span className="text-[var(--color-text-secondary)]">Tasks hoàn thành tháng này</span>
                 <span className="text-2xl">📈</span>
               </div>
-              <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-2">15</p>
-              <p className="text-[var(--color-text-secondary)] text-sm">+25% so với tháng trước</p>
+              <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-2">
+                {dashboardData.performance.completedThisMonth}
+              </p>
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                {dashboardData.performance.monthlyGrowthPercentage > 0 ? '+' : ''}
+                {dashboardData.performance.monthlyGrowthPercentage}% so với tháng trước
+              </p>
             </div>
             
             <div className="bg-white p-4 rounded-lg">
@@ -412,7 +624,9 @@ const MemberDashboardPage: React.FC = () => {
                 <span className="text-[var(--color-text-secondary)]">Điểm đánh giá trung bình</span>
                 <span className="text-2xl">⭐</span>
               </div>
-              <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-2">4.8/5</p>
+              <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-2">
+                {dashboardData.performance.averageRating}/5
+              </p>
               <p className="text-[var(--color-text-secondary)] text-sm">Xuất sắc</p>
             </div>
             
@@ -421,8 +635,10 @@ const MemberDashboardPage: React.FC = () => {
                 <span className="text-[var(--color-text-secondary)]">Thời gian hoàn thành trung bình</span>
                 <span className="text-2xl">⏱️</span>
               </div>
-              <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-2">2.5 ngày</p>
-              <p className="text-[var(--color-text-secondary)] text-sm">Nhanh hơn 15% so với team</p>
+              <p className="text-2xl font-bold text-[var(--color-text-primary)] mt-2">
+                {dashboardData.performance.averageCompletionDays} ngày
+              </p>
+              <p className="text-[var(--color-text-secondary)] text-sm">Hiệu quả cao</p>
             </div>
           </div>
         </div>

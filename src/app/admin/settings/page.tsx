@@ -86,7 +86,7 @@ const SettingsPage: React.FC = () => {
                   <p className="font-medium text-[var(--color-text-primary)]">Chế độ bảo trì</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">Tạm dừng hệ thống để bảo trì</p>
                 </div>
-                <button className="w-12 h-6 bg-gray-300 rounded-full relative transition-colors duration-200 hover:bg-gray-400">
+                <button className="w-12 h-6 bg-gray-300 rounded-full relative transition-colors duration-200 hover:bg-gray-400 cursor-pointer">
                   <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform duration-200"></div>
                 </button>
               </div>
@@ -96,7 +96,7 @@ const SettingsPage: React.FC = () => {
                   <p className="font-medium text-[var(--color-text-primary)]">Tự động backup</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">Sao lưu dữ liệu hàng ngày</p>
                 </div>
-                <button className="w-12 h-6 bg-green-500 rounded-full relative transition-colors duration-200 hover:bg-green-600">
+                <button className="w-12 h-6 bg-green-500 rounded-full relative transition-colors duration-200 hover:bg-green-600 cursor-pointer">
                   <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 transition-transform duration-200"></div>
                 </button>
               </div>
@@ -106,7 +106,7 @@ const SettingsPage: React.FC = () => {
                   <p className="font-medium text-[var(--color-text-primary)]">Email thông báo</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">Gửi thông báo qua email</p>
                 </div>
-                <button className="w-12 h-6 bg-green-500 rounded-full relative transition-colors duration-200 hover:bg-green-600">
+                <button className="w-12 h-6 bg-green-500 rounded-full relative transition-colors duration-200 hover:bg-green-600 cursor-pointer">
                   <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 transition-transform duration-200"></div>
                 </button>
               </div>
@@ -134,7 +134,7 @@ const SettingsPage: React.FC = () => {
                 </div>
               </div>
 
-              <button className="w-full neumorphic-button mt-4">
+              <button className="w-full neumorphic-button mt-4 cursor-pointer">
                 Quản lý người dùng
               </button>
             </div>
@@ -162,10 +162,10 @@ const SettingsPage: React.FC = () => {
               </div>
 
               <div className="flex space-x-2">
-                <button className="flex-1 neumorphic-button">
+                <button className="flex-1 neumorphic-button cursor-pointer">
                   Sao lưu ngay
                 </button>
-                <button className="flex-1 py-3 px-4 rounded-xl bg-orange-100 text-orange-700 font-medium hover:bg-orange-200 transition-colors duration-200">
+                <button className="flex-1 py-3 px-4 rounded-xl bg-orange-100 text-orange-700 font-medium hover:bg-orange-200 transition-colors duration-200 cursor-pointer">
                   Tối ưu DB
                 </button>
               </div>
@@ -184,8 +184,8 @@ const SettingsPage: React.FC = () => {
                   <p className="font-medium text-[var(--color-text-primary)]">Xác thực 2 lớp</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">Tăng cường bảo mật đăng nhập</p>
                 </div>
-                <button className="w-12 h-6 bg-gray-300 rounded-full relative transition-colors duration-200 hover:bg-gray-400">
-                  <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform duration-200"></div>
+                <button className="w-12 h-6 bg-gray-300 rounded-full relative transition-colors duration-200 hover:bg-gray-400 cursor-pointer">
+                  <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5 transition-transform duration-200 cursor-pointer"></div>
                 </button>
               </div>
               
@@ -194,12 +194,12 @@ const SettingsPage: React.FC = () => {
                   <p className="font-medium text-[var(--color-text-primary)]">Hết hạn session</p>
                   <p className="text-sm text-[var(--color-text-secondary)]">Tự động đăng xuất sau 24h</p>
                 </div>
-                <button className="w-12 h-6 bg-green-500 rounded-full relative transition-colors duration-200 hover:bg-green-600">
+                <button className="w-12 h-6 bg-green-500 rounded-full relative transition-colors duration-200 hover:bg-green-600 cursor-pointer ">
                   <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5 transition-transform duration-200"></div>
                 </button>
               </div>
 
-              <button className="w-full py-3 px-4 rounded-xl bg-red-100 text-red-700 font-medium hover:bg-red-200 transition-colors duration-200">
+              <button className="w-full py-3 px-4 rounded-xl bg-red-100 text-red-700 font-medium hover:bg-red-200 transition-colors duration-200 cursor-pointer">
                 Xem nhật ký bảo mật
               </button>
             </div>
@@ -211,7 +211,7 @@ const SettingsPage: React.FC = () => {
           <button className="neumorphic-button">
             Lưu thay đổi
           </button>
-          <button className="py-3 px-6 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200">
+          <button className="py-3 px-6 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer">
             Khôi phục mặc định
           </button>
         </div>

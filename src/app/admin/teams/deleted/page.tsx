@@ -192,7 +192,7 @@ export default function DeletedTeamsPage() {
               <select
                 value={selectedLeader}
                 onChange={(e) => setSelectedLeader(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner border border-gray-200"
+                className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner border border-gray-200"
               >
                 <option value="">Tất cả Team Leader</option>
               </select>
@@ -201,7 +201,7 @@ export default function DeletedTeamsPage() {
             <div className="lg:col-span-4 flex items-end space-x-3">
               <button
                 onClick={handleSearch}
-                className="neumorphic-button bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 hover:from-blue-600 hover:to-blue-700 flex items-center space-x-2"
+                className="neumorphic-button bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 hover:from-blue-600 hover:to-blue-700 flex items-center space-x-2 cursor-pointer"
               >
                 <span>🔍</span>
                 <span>Tìm kiếm</span>
@@ -212,7 +212,7 @@ export default function DeletedTeamsPage() {
                   setSelectedLeader('');
                   setCurrentPage(1);
                 }}
-                className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-200 border border-gray-200"
+                className="px-6 py-3 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors duration-200 border border-gray-200 cursor-pointer"
               >
                 Đặt lại
               </button>
@@ -368,7 +368,7 @@ export default function DeletedTeamsPage() {
                       <button
                         onClick={() => handleRestore(team._id)}
                         disabled={restoring === team._id}
-                        className="w-full neumorphic-button bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 px-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium"
+                        className="w-full neumorphic-button bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-3 px-4 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 font-medium cursor-pointer"
                       >
                         {restoring === team._id ? (
                           <>
@@ -402,7 +402,7 @@ export default function DeletedTeamsPage() {
                 <button
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="neumorphic-button px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                  className="neumorphic-button px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 "
                 >
                   <span>←</span>
                   <span>Trước</span>
@@ -417,7 +417,7 @@ export default function DeletedTeamsPage() {
                       <button
                         key={`pagination-${i}-${page}`}
                         onClick={() => handlePageChange(page)}
-                        className={`px-3 py-2 text-sm rounded-lg transition-all duration-200 min-w-[40px] ${
+                        className={`px-3 py-2 text-sm rounded-lg transition-all duration-200 min-w-[40px] cursor-pointer ${
                           currentPage === page
                             ? 'bg-gradient-to-r from-[var(--color-accent)] to-blue-600 text-white shadow-lg font-medium'
                             : 'neumorphic-button hover:bg-gray-50'
@@ -432,7 +432,7 @@ export default function DeletedTeamsPage() {
                 <button
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="neumorphic-button px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                  className="neumorphic-button px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1 cursor-pointer"
                 >
                   <span>Sau</span>
                   <span>→</span>

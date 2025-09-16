@@ -287,7 +287,7 @@ const AdminDashboardPage: React.FC = () => {
               </h2>
               <button 
                 onClick={handleOpenActivityModal}
-                className="text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] text-sm font-medium transition-colors duration-200"
+                className="text-[var(--color-accent)] hover:text-[var(--color-accent-dark)] text-sm font-medium transition-colors duration-200 cursor-pointer"
               >
                 Xem tất cả →
               </button>
@@ -504,7 +504,7 @@ const AdminDashboardPage: React.FC = () => {
                 </h2>
                 <button 
                   onClick={() => setShowActivityModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold cursor-pointer"
                 >
                   ×
                 </button>

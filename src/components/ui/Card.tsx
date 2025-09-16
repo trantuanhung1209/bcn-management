@@ -12,9 +12,9 @@ export function Card({ children, className, hover = false, pressed = false }: Ca
   return (
     <div
       className={cn(
-        'bg-white rounded-xl p-6 shadow-neumorphic',
-        hover && 'transition-all duration-200 hover:shadow-neumorphic-hover',
-        pressed && 'shadow-neumorphic-pressed',
+        'section-neumorphic',
+        hover && '',
+        pressed && 'shadow-inner',
         className
       )}
     >
@@ -25,7 +25,7 @@ export function Card({ children, className, hover = false, pressed = false }: Ca
 
 export function CardHeader({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('mb-4', className)}>
+    <div className={cn('mb-4 p-6 pb-2', className)}>
       {children}
     </div>
   );
@@ -41,7 +41,7 @@ export function CardTitle({ children, className }: { children: ReactNode; classN
 
 export function CardContent({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('text-gray-600', className)}>
+    <div className={cn('text-gray-600 p-6 pt-0', className)}>
       {children}
     </div>
   );
