@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Files
+Disallow: /api/
+Disallow: /_next/
+
+# Sitemap
+Sitemap: https://your-domain.com/sitemap.xml
