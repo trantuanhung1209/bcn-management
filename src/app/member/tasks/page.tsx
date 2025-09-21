@@ -37,21 +37,43 @@ const MemberTasksPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       
+      // Get token from localStorage
+      const token = localStorage.getItem('authToken');
+      console.log('Token from localStorage:', token ? 'exists' : 'null');
+      
+      // Prepare headers
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add Authorization header if token exists
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       // Fetch all tasks without filters - do filtering on client side
       const response = await fetch(`/api/member/tasks`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
-        },
-        credentials: 'include'
+        headers,
+        credentials: 'include' // Important for cookies
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch tasks');
+        // If 401, try to redirect to login
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userData');
+          window.location.href = '/auth/login';
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: Failed to fetch tasks`);
       }
 
       const result = await response.json();
+      console.log('API response:', result);
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to load tasks');
@@ -100,17 +122,30 @@ const MemberTasksPage: React.FC = () => {
         )
       );
 
+      // Get token and prepare headers
+      const token = localStorage.getItem('authToken');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`/api/member/tasks/${taskId}/progress`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify({ status: newStatus })
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userData');
+          window.location.href = '/auth/login';
+          return;
+        }
         throw new Error('Failed to update task status');
       }
 
@@ -141,17 +176,30 @@ const MemberTasksPage: React.FC = () => {
         )
       );
 
+      // Get token and prepare headers
+      const token = localStorage.getItem('authToken');
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`/api/member/tasks/${taskId}/progress`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
-        },
+        headers,
         credentials: 'include',
         body: JSON.stringify({ progress: newProgress })
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userData');
+          window.location.href = '/auth/login';
+          return;
+        }
         throw new Error('Failed to update task progress');
       }
 

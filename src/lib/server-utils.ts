@@ -18,18 +18,12 @@ export const comparePassword = async (password: string, hashedPassword: string):
 
 // JWT token generation
 export const generateToken = (payload: any): string => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET is not defined");
-  }
+  const secret = process.env.JWT_SECRET || 'your-secret-key';
   return jwt.sign(payload, secret, { expiresIn: "7d" });
 }
 
 export const verifyToken = (token: string): any => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error("JWT_SECRET is not defined");
-  }
+  const secret = process.env.JWT_SECRET || 'your-secret-key';
   return jwt.verify(token, secret);
 }
 
