@@ -3,18 +3,19 @@ import { TaskModel } from '@/models/Task';
 import { getAuthenticatedUserId } from '@/lib/auth-middleware';
 import { UserModel } from '@/models/User';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
+
     // Check authentication
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const taskId = params.id;
+    // Extract taskId from URL
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const taskId = pathParts[pathParts.indexOf('tasks') + 1];
 
     if (!taskId) {
       return NextResponse.json(

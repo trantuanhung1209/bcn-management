@@ -61,7 +61,7 @@ const MemberTasksPage: React.FC = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, []); // Only run once on mount
+  }, [fetchTasks]); // Đưa fetchTasks vào dependency array
 
   const updateTaskStatus = async (taskId: string, newStatus: TaskStatus) => {
     try {

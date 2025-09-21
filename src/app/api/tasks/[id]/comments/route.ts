@@ -5,18 +5,19 @@ import { UserModel } from '@/models/User';
 import { ObjectId } from 'mongodb';
 import { createCommentReplyNotification, createTaskCommentNotification } from '@/lib/notification-utils';
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest) {
   try {
+
     // Check authentication
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const taskId = params.id;
+    // Extract taskId from URL
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const taskId = pathParts[pathParts.indexOf('tasks') + 1];
     const { content, parentCommentId } = await request.json();
 
     if (!taskId) {
