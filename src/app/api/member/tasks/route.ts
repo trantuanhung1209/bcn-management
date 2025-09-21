@@ -9,9 +9,15 @@ export async function GET(request: NextRequest) {
   try {
     await clientPromise;
 
+    // Debug: Log request headers
+    console.log('Auth header:', request.headers.get('authorization'));
+
     // Get user from token
     const user = await getUserFromToken(request);
+    console.log('User from token:', user ? user._id : 'null');
+    
     if (!user) {
+      console.log('Authentication failed - no user found');
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }

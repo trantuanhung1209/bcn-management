@@ -6,12 +6,13 @@ import { getAuthenticatedUserId } from '@/lib/auth-middleware';
 import { createTaskUpdatedNotification } from '@/lib/notification-utils';
 
 // GET /api/tasks/[id] - Get task by ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest) {
   try {
-    const { id } = await params;
+    // Extract taskId from URL
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.indexOf('tasks') + 1];
+    
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -133,12 +134,13 @@ export async function GET(
 }
 
 // PUT /api/tasks/[id] - Update task
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest) {
   try {
-    const { id } = await params;
+    // Extract taskId from URL
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.indexOf('tasks') + 1];
+    
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -229,12 +231,13 @@ export async function PUT(
 }
 
 // DELETE /api/tasks/[id] - Delete task (Manager/Admin/Team Leader only)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: NextRequest) {
   try {
-    const { id } = await params;
+    // Extract taskId from URL
+    const url = new URL(request.url);
+    const pathParts = url.pathname.split('/');
+    const id = pathParts[pathParts.indexOf('tasks') + 1];
+    
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -21,6 +21,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole }) => {
   const [detectedRole, setDetectedRole] = useState<
     "admin" | "team_leader" | "member"
   >("member");
+  
+  // Search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Detect role from URL path or localStorage
   useEffect(() => {
@@ -64,6 +70,63 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole }) => {
       }
     }
   }, [pathname, userRole]);
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!searchQuery.trim()) {
+        setSearchResults([]);
+        setShowSearchResults(false);
+        return;
+      }
+
+      const performSearch = async () => {
+        setIsSearching(true);
+        setShowSearchResults(true);
+
+        try {
+          const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&role=${detectedRole}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+            },
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            throw new Error('Search failed');
+          }
+
+          const result = await response.json();
+          
+          if (result.success) {
+            setSearchResults(result.data || []);
+          } else {
+            setSearchResults([]);
+          }
+        } catch (error) {
+          console.error('Search error:', error);
+          setSearchResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      };
+
+      performSearch();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, detectedRole]);
+
+  // Handle search result click
+  const handleResultClick = (result: any) => {
+    setShowSearchResults(false);
+    setSearchQuery("");
+    
+    // Navigate to task detail page
+    router.push(`/${detectedRole}/tasks/${result.id}`);
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -112,10 +175,71 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, userRole }) => {
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search..."
+                    placeholder="Tìm kiếm tasks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery && setShowSearchResults(true)}
+                    onBlur={() => setTimeout(() => setShowSearchResults(false), 200)}
                     className="w-64 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 neumorphic-input"
                   />
                   <IoSearch className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  
+                  {/* Search Results Dropdown */}
+                  {showSearchResults && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                      {isSearching ? (
+                        <div className="p-4 text-center">
+                          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                          <span className="text-sm text-gray-500">Đang tìm kiếm...</span>
+                        </div>
+                      ) : searchResults.length > 0 ? (
+                        <div className="py-2">
+                          {searchResults.map((result, index) => (
+                            <div
+                              key={`${result.type}-${result.id}-${index}`}
+                              onClick={() => handleResultClick(result)}
+                              className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-medium">
+                                  �
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="text-sm font-medium text-gray-900">{result.title}</h4>
+                                  {result.description && (
+                                    <p className="text-xs text-gray-500 truncate">{result.description}</p>
+                                  )}
+                                  <div className="flex items-center space-x-2 mt-1">
+                                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+                                      Task
+                                    </span>
+                                    {result.status && (
+                                      <span className="text-xs text-gray-400">• {result.status}</span>
+                                    )}
+                                    {result.priority && (
+                                      <span className={`text-xs ${
+                                        result.priority === 'urgent' ? 'text-red-500' :
+                                        result.priority === 'high' ? 'text-orange-500' :
+                                        result.priority === 'medium' ? 'text-yellow-500' :
+                                        'text-green-500'
+                                      }`}>
+                                        • {result.priority}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : searchQuery.trim() ? (
+                        <div className="p-4 text-center text-gray-500">
+                          <div className="text-2xl mb-2">🔍</div>
+                          <p className="text-sm">Không tìm thấy kết quả cho &ldquo;{searchQuery}&rdquo;</p>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -3,13 +3,11 @@ import { getUserFromToken } from '@/lib/auth-utils';
 import { TaskModel } from '@/models/Task';
 import { UserRole, TaskStatus } from '@/types';
 import { createTaskUpdatedNotification } from '@/lib/notification-utils';
+import { getIdFromUrl } from '@/lib/server-utils';
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest) {
   try {
-    const { id } = await params;
+    const id = getIdFromUrl(request, 'tasks');
     
     // Get user from token
     const user = await getUserFromToken(request);

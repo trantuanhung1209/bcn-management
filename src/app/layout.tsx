@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,11 +36,15 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/favicon/site.webmanifest',
-  themeColor: '#ffffff',
-  viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
   authors: [{ name: 'TeamHub Development Team' }],
   keywords: ['team management', 'project management', 'collaboration', 'teamhub'],
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#ffffff',
 };
 
 export default function RootLayout({

@@ -156,22 +156,45 @@ export const filterUsersForManager = async (managerId: string, userRole: string,
   return [];
 }
 
+// Get ID from URL path for dynamic routes
+export const getIdFromUrl = (request: NextRequest, pathSegment: string = 'id'): string => {
+  const url = new URL(request.url);
+  const pathParts = url.pathname.split('/');
+  
+  // For routes like /api/tasks/[id] - get the id after 'tasks'
+  if (pathSegment !== 'id') {
+    const index = pathParts.indexOf(pathSegment);
+    return index !== -1 && pathParts[index + 1] ? pathParts[index + 1] : '';
+  }
+  
+  // For general dynamic routes, get the last meaningful segment
+  return pathParts[pathParts.length - 1] || '';
+}
+
 // Get user from authorization token
 export const getUserFromToken = async (request: NextRequest): Promise<any | null> => {
   try {
     const authHeader = request.headers.get('authorization');
+    console.log('Auth header received:', authHeader);
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('No valid auth header found');
       return null;
     }
 
     const token = authHeader.split(' ')[1];
+    console.log('Token extracted:', token ? 'exists' : 'null');
+    
     const decoded = verifyToken(token);
+    console.log('Token decoded:', decoded);
     
     if (!decoded || !decoded.userId) {
+      console.log('Invalid token payload');
       return null;
     }
 
     const user = await UserModel.findById(decoded.userId);
+    console.log('User found:', user ? user._id : 'null');
     return user;
   } catch (error) {
     console.error('Token verification error:', error);

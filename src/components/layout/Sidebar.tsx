@@ -45,7 +45,6 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
 
     // Skip if already fetched or currently loading
     if (userDataFetched || isLoadingUser) {
-      console.log('User data already fetched or loading, skipping...');
       return;
     }
 
@@ -76,8 +75,6 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         // Optional: Update localStorage with fresh data
         localStorage.setItem('userName', `${user.firstName} ${user.lastName}`);
         localStorage.setItem('userRole', user.role || 'member');
-        
-        console.log('User data fetched successfully:', user);
       } else {
         console.error('Failed to fetch user data:', result.error);
       }
@@ -345,8 +342,9 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
                   console.log('Avatar failed to load, falling back to initials');
                   setUserAvatar(null);
                 }}
-                onLoadingComplete={(result) => {
-                  if (result.naturalWidth === 0) {
+                onLoad={(event) => {
+                  const img = event.target as HTMLImageElement;
+                  if (img.naturalWidth === 0) {
                     console.log('Avatar loaded but invalid, falling back to initials');
                     setUserAvatar(null);
                   }

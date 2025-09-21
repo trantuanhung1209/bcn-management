@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { TaskModel } from '@/models/Task';
 import { UserModel } from '@/models/User';
 import { getAuthenticatedUserId } from '@/lib/auth-middleware';
+import { getIdFromUrl } from '@/lib/server-utils';
 
 // PUT /api/tasks/[id]/progress - Member cập nhật progress
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest) {
   try {
-    const resolvedParams = await params;
+    const taskId = getIdFromUrl(request, 'tasks');
     const userId = await getAuthenticatedUserId(request);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -37,7 +35,7 @@ export async function PUT(
       }, { status: 400 });
     }
 
-    const success = await TaskModel.updateProgress(resolvedParams.id, progress, userId);
+    const success = await TaskModel.updateProgress(taskId, progress, userId);
     
     if (success) {
       return NextResponse.json({

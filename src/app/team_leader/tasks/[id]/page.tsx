@@ -866,7 +866,7 @@ export default function TaskDetailPage() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900">Bình luận</h3>
                 {task.comments && task.comments.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="max-h-96 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
                     {task.comments
                       .filter(comment => !comment.parentCommentId) // Only show top-level comments
                       .map((comment, index) => (

@@ -281,6 +281,10 @@ export default function MemberTaskDetailPage() {
   const [replyingToCommentId, setReplyingToCommentId] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [isAddingReply, setIsAddingReply] = useState(false);
+  
+  // Thank you toast states
+  const [showThankYouToast, setShowThankYouToast] = useState(false);
+  const [teamLeaderName, setTeamLeaderName] = useState('');
 
   // Fetch task details
   const fetchTask = useCallback(async () => {
@@ -406,9 +410,15 @@ export default function MemberTaskDetailPage() {
         fetchTask();
         fetchTaskHistory();
         
-        // Show appropriate message
+        // Show thank you toast when completing a task
         if (newStatus === 'completed') {
-          alert('🎉 Task đã hoàn thành!');
+          setTeamLeaderName(task.createdByName || 'Team Leader');
+          setShowThankYouToast(true);
+          
+          // Auto hide toast after 5 seconds
+          setTimeout(() => {
+            setShowThankYouToast(false);
+          }, 5000);
         } else if (newStatus === 'in_progress') {
           alert('🚀 Đã bắt đầu làm task!');
         }
@@ -946,6 +956,58 @@ export default function MemberTaskDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Thank You Toast */}
+      {showThankYouToast && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className="section-neumorphic bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 max-w-sm shadow-lg">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-lg">🎉</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-bold text-green-800">
+                    Cảm ơn từ Team Leader! 
+                  </p>
+                  <button
+                    onClick={() => setShowThankYouToast(false)}
+                    className="text-green-600 hover:text-green-800 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="text-xs text-green-700 leading-relaxed">
+                  Xuất sắc! Bạn đã hoàn thành &ldquo;<span className="font-semibold">{task.title}</span>&rdquo; đúng hạn. 
+                  Team rất tự hào về bạn! 💪
+                </p>
+                <div className="mt-2 flex items-center text-xs text-green-600">
+                  <span className="mr-1">💼</span>
+                  <span className="italic">- {teamLeaderName} (Team Leader)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes slide-in-right {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in-right {
+          animation: slide-in-right 0.3s ease-out forwards;
+        }
+      `}</style>
     </MainLayout>
   );
 }

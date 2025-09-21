@@ -72,6 +72,11 @@ const MemberDashboardPage: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<{day: number, month: number, year: number} | null>(null);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  
+  // Thank you toast states
+  const [showThankYouToast, setShowThankYouToast] = useState(false);
+  const [completedTaskTitle, setCompletedTaskTitle] = useState('');
+  const [teamLeaderName, setTeamLeaderName] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
@@ -112,6 +117,22 @@ const MemberDashboardPage: React.FC = () => {
 
   const updateTaskProgress = async (taskId: string, newProgress: number) => {
     try {
+      // Find the task being updated
+      const currentTask = dashboardData?.todayTasks.find(t => t._id === taskId);
+      
+      // Show thank you toast when task is completed (progress = 100)
+      if (newProgress === 100 && currentTask && currentTask.progress < 100) {
+        setCompletedTaskTitle(currentTask.title);
+        // We don't have assignedBy in the current data, so we'll use a generic team leader name
+        setTeamLeaderName('Team Leader');
+        setShowThankYouToast(true);
+        
+        // Auto hide toast after 5 seconds
+        setTimeout(() => {
+          setShowThankYouToast(false);
+        }, 5000);
+      }
+      
       setDashboardData(prev => {
         if (!prev) return prev;
         return {
@@ -340,33 +361,63 @@ const MemberDashboardPage: React.FC = () => {
     ? Math.round((dashboardData.stats.completedTasks / dashboardData.stats.assignedTasks) * 100)
     : 0;
 
+  // Function to get greeting based on time of day
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    
+    if (hour >= 5 && hour < 12) {
+      return { text: 'Chào buổi sáng', emoji: '🌅' };
+    } else if (hour >= 12 && hour < 17) {
+      return { text: 'Chào buổi chiều', emoji: '☀️' };
+    } else if (hour >= 17 && hour < 21) {
+      return { text: 'Chào buổi tối', emoji: '🌆' };
+    } else {
+      return { text: 'Chào buổi đêm', emoji: '🌙' };
+    }
+  };
+
+  const greeting = getTimeBasedGreeting();
+
   return (
     <MainLayout userRole="member">
       <div className="space-y-6">
         {/* Simple Header */}
         <div className="section-neumorphic p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                Xin chào, {dashboardData.user.name} 👋
-              </h1>
-              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
-                {new Date().toLocaleDateString('vi-VN', { 
-                  weekday: 'long', 
-                  day: 'numeric', 
-                  month: 'long' 
-                })}
-              </p>
+            <div className="flex items-center space-x-3">
+              {/* Avatar Circle */}
+              <div className="section-neumorphic w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-lg">
+                {greeting.emoji}
+              </div>
+              
+              <div>
+                <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">
+                  {greeting.text}, {dashboardData.user.name} 
+                </h1>
+                <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                  {new Date().toLocaleDateString('vi-VN', { 
+                    weekday: 'long', 
+                    day: 'numeric', 
+                    month: 'long' 
+                  })}
+                </p>
+              </div>
             </div>
             
-            {/* Progress Overview */}
-            <div className="text-center">
-              <ProgressRing 
-                progress={completionRate}
-                size={60}
-                color="#10B981"
-              />
-              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">Hoàn thành</p>
+            {/* Quick Stats */}
+            <div className="flex items-center space-x-2">
+              <div className="section-neumorphic px-2 py-1 bg-white rounded-lg">
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs text-green-600 font-bold">{dashboardData.stats.completedTasks}</span>
+                  <span className="text-xs text-[var(--color-text-secondary)]">hoàn thành</span>
+                </div>
+              </div>
+              <div className="section-neumorphic px-2 py-1 bg-white rounded-lg">
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs text-blue-600 font-bold">{dashboardData.stats.inProgressTasks}</span>
+                  <span className="text-xs text-[var(--color-text-secondary)]">đang làm</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -818,6 +869,58 @@ const MemberDashboardPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Thank You Toast */}
+      {showThankYouToast && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className="section-neumorphic bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4 max-w-sm shadow-lg">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-lg">🎉</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-bold text-green-800">
+                    Cảm ơn từ Team Leader! 
+                  </p>
+                  <button
+                    onClick={() => setShowThankYouToast(false)}
+                    className="text-green-600 hover:text-green-800 transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="text-xs text-green-700 leading-relaxed">
+                  Xuất sắc! Bạn đã hoàn thành &ldquo;<span className="font-semibold">{completedTaskTitle}</span>&rdquo; đúng hạn. 
+                  Team rất tự hào về bạn! 💪
+                </p>
+                <div className="mt-2 flex items-center text-xs text-green-600">
+                  <span className="mr-1">💼</span>
+                  <span className="italic">- {teamLeaderName}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes slide-in-right {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in-right {
+          animation: slide-in-right 0.3s ease-out forwards;
+        }
+      `}</style>
     </MainLayout>
   );
 };
