@@ -78,7 +78,7 @@ async function getUserStats(userId: string) {
     const userTasks = await TaskModel.findByUser(userId);
     
     // Calculate tasks completed
-    const completedTasks = userTasks.filter((task: any) => task.status === 'done');
+    const completedTasks = userTasks.filter((task: any) => task.status === 'completed');
     const tasksCompleted = completedTasks.length;
 
     // Calculate average rating from completed tasks
@@ -102,7 +102,7 @@ async function getUserStats(userId: string) {
     const inProgressTasks = userTasks.filter((task: any) => task.status === 'in_progress').length;
     const pendingTasks = userTasks.filter((task: any) => task.status === 'todo').length;
     const overdueTasks = userTasks.filter((task: any) => {
-      if (task.status === 'done') return false;
+      if (task.status === 'completed') return false;
       return task.dueDate && new Date(task.dueDate) < new Date();
     }).length;
 

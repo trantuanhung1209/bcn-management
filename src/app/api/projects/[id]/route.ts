@@ -3,6 +3,11 @@ import { ProjectModel } from '@/models/Project';
 import { TaskModel } from '@/models/Task';
 import { ObjectId } from 'mongodb';
 import { TaskStatus } from '@/types';
+import { 
+  createProjectUpdatedNotification, 
+  createProjectDeletedNotification,
+  getTeamLeaderIdFromTeam 
+} from '@/lib/notification-utils';
 
 // GET: Get project by ID
 export async function GET(
@@ -34,7 +39,7 @@ export async function GET(
       const totalTasks = tasks.length;
       // Check for 'done' status from database
       const completedTasks = tasks.filter(task => 
-        task.status === TaskStatus.DONE
+        task.status === TaskStatus.COMPLETED
       ).length;
       const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -114,6 +119,15 @@ export async function PUT(
       return new ObjectId();
     };
 
+    // Get original project để so sánh thay đổi
+    const originalProject = await ProjectModel.findById(id);
+    if (!originalProject) {
+      return NextResponse.json(
+        { success: false, error: 'Project not found' },
+        { status: 404 }
+      );
+    }
+
     // Convert string IDs to ObjectIds if present
     const updateData = { ...data };
     if (updateData.team) updateData.team = getTeamObjectId(updateData.team);
@@ -133,6 +147,37 @@ export async function PUT(
         { success: false, error: 'Project not found' },
         { status: 404 }
       );
+    }
+
+    // Gửi notification nếu có team được assign và có thay đổi quan trọng
+    if (project.team) {
+      try {
+        const teamLeaderId = await getTeamLeaderIdFromTeam(project.team);
+        if (teamLeaderId) {
+          // Kiểm tra các thay đổi quan trọng
+          const changes: string[] = [];
+          if (data.name && data.name !== originalProject.name) changes.push('tên dự án');
+          if (data.description && data.description !== originalProject.description) changes.push('mô tả');
+          if (data.priority && data.priority !== originalProject.priority) changes.push('độ ưu tiên');
+          if (data.status && data.status !== originalProject.status) changes.push('trạng thái');
+          if (data.deadline && data.deadline !== originalProject.deadline?.toISOString()) changes.push('deadline');
+          if (data.endDate && data.endDate !== originalProject.endDate?.toISOString()) changes.push('ngày kết thúc');
+
+          // Chỉ gửi notification nếu có thay đổi quan trọng
+          if (changes.length > 0) {
+            await createProjectUpdatedNotification(
+              project._id!.toString(),
+              project.name,
+              'current-admin-id', // Thay bằng ID admin thực từ auth
+              teamLeaderId,
+              changes
+            );
+          }
+        }
+      } catch (notificationError) {
+        console.warn('Failed to send notification for project update:', notificationError);
+        // Không throw error vì project đã được update thành công
+      }
     }
 
     return NextResponse.json({
@@ -164,13 +209,40 @@ export async function DELETE(
       );
     }
 
-    const success = await ProjectModel.delete(id);
-    
-    if (!success) {
+    // Lấy thông tin project trước khi xóa để gửi notification
+    const project = await ProjectModel.findById(id);
+    if (!project) {
       return NextResponse.json(
         { success: false, error: 'Project not found' },
         { status: 404 }
       );
+    }
+
+    const success = await ProjectModel.delete(id);
+    
+    if (!success) {
+      return NextResponse.json(
+        { success: false, error: 'Failed to delete project' },
+        { status: 500 }
+      );
+    }
+
+    // Gửi notification cho team leader nếu project có team
+    if (project.team) {
+      try {
+        const teamLeaderId = await getTeamLeaderIdFromTeam(project.team);
+        if (teamLeaderId) {
+          await createProjectDeletedNotification(
+            project._id!.toString(),
+            project.name,
+            'current-admin-id', // Thay bằng ID admin thực từ auth
+            teamLeaderId
+          );
+        }
+      } catch (notificationError) {
+        console.warn('Failed to send notification for project deletion:', notificationError);
+        // Không throw error vì project đã được xóa thành công
+      }
     }
 
     return NextResponse.json({

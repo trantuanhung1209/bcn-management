@@ -131,8 +131,8 @@
 
   /* Inner neumorphic shadow only */
   box-shadow:
-    inset -6px -6px 12px rgba(22, 17, 29, 0.15),
-    inset 6px 6px 12px #FAFBFF;
+    inset -2px -2px 4px rgba(22, 17, 29, 0.15),
+    inset 2px 2px 4px #FAFBFF;
   /* Subtle border */
   border: 1px solid rgba(224, 247, 250, 0.2);
 

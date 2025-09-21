@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromToken } from '@/lib/auth-utils';
 import { TaskModel } from '@/models/Task';
 import { UserRole, TaskStatus } from '@/types';
+import { createTaskUpdatedNotification } from '@/lib/notification-utils';
 
 export async function PUT(
   request: NextRequest,
@@ -82,6 +83,22 @@ export async function PUT(
 
     // Get updated task
     updatedTask = await TaskModel.findById(id);
+
+    // Tạo notification cho team leader chỉ khi task hoàn thành (status = 'completed')
+    try {
+      if (status === 'completed') {
+        await createTaskUpdatedNotification(
+          id,
+          task.title,
+          'status',
+          'completed',
+          user.id,
+          task.createdBy.toString()
+        );
+      }
+    } catch (error) {
+      console.warn('Failed to create task update notification:', error);
+    }
 
     return NextResponse.json({
       success: true,

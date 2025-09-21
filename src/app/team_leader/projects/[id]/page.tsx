@@ -595,10 +595,14 @@ export default function ProjectDetailPage() {
                   </thead>
                   <tbody>
                     {tasks.map((task) => (
-                      <tr key={task.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
+                      <tr 
+                        key={task.id} 
+                        className="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                        onClick={() => router.push(`/team_leader/tasks/${task.id}`)}
+                      >
                         <td className="py-4 px-4">
                           <div>
-                            <h3 className="font-semibold text-gray-900 mb-1">{task.title}</h3>
+                            <h3 className="font-semibold text-gray-900 mb-1 hover:text-blue-600 transition-colors duration-200">{task.title}</h3>
                             {task.description && (
                               <p className="text-gray-600 text-sm">{task.description}</p>
                             )}
@@ -655,7 +659,10 @@ export default function ProjectDetailPage() {
                         <td className="py-4 px-4">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() => handleEditTask(task)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditTask(task);
+                              }}
                               className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150 cursor-pointer"
                               title="Chỉnh sửa"
                             >
@@ -664,7 +671,10 @@ export default function ProjectDetailPage() {
                               </svg>
                             </button>
                             <button
-                              onClick={() => handleDeleteTask(task)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteTask(task);
+                              }}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150 cursor-pointer"
                               title="Xóa"
                             >

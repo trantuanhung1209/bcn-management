@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TaskModel } from '@/models/Task';
 import { UserModel } from '@/models/User';
+import { ProjectModel } from '@/models/Project';
 import { getAuthenticatedUserId } from '@/lib/auth-middleware';
+import { createTaskUpdatedNotification } from '@/lib/notification-utils';
 
 // GET /api/tasks/[id] - Get task by ID
 export async function GET(
@@ -35,9 +37,90 @@ export async function GET(
       }, { status: 403 });
     }
 
+    // Populate comment authors and other user info
+    const populatedTask: any = { ...task };
+    
+    // Populate project info
+    if (task.project) {
+      const project = await ProjectModel.findById(task.project);
+      if (project) {
+        populatedTask.projectName = project.name;
+      }
+    }
+    
+    // Populate assigned user info
+    if (task.assignedTo) {
+      const assignedUser = await UserModel.findById(task.assignedTo);
+      if (assignedUser) {
+        populatedTask.assignedToName = `${assignedUser.firstName} ${assignedUser.lastName}`;
+        populatedTask.assignedToEmail = assignedUser.email;
+        populatedTask.assignedToRole = assignedUser.role;
+      }
+    }
+
+    // Populate created by user info
+    if (task.createdBy) {
+      const createdByUser = await UserModel.findById(task.createdBy);
+      if (createdByUser) {
+        populatedTask.createdByName = `${createdByUser.firstName} ${createdByUser.lastName}`;
+      }
+    }
+
+    // Populate comment authors
+    if (task.comments && task.comments.length > 0) {
+      const populatedComments = await Promise.all(
+        task.comments.map(async (comment: any) => {
+          const populatedComment: any = {
+            ...comment,
+            id: comment._id?.toString() || comment.id,
+            type: 'comment' // default type
+          };
+          
+          if (comment.author) {
+            const author = await UserModel.findById(comment.author);
+            populatedComment.authorName = author ? `${author.firstName} ${author.lastName}` : 'Unknown User';
+            populatedComment.authorEmail = author?.email || '';
+            populatedComment.authorAvatar = author?.avatar || null;
+          } else {
+            populatedComment.authorName = 'Unknown User';
+            populatedComment.authorAvatar = null;
+          }
+
+          // Populate replies if they exist
+          if (comment.replies && comment.replies.length > 0) {
+            const populatedReplies = await Promise.all(
+              comment.replies.map(async (reply: any) => {
+                const populatedReply: any = {
+                  ...reply,
+                  id: reply._id?.toString() || reply.id,
+                  type: 'comment'
+                };
+                
+                if (reply.author) {
+                  const replyAuthor = await UserModel.findById(reply.author);
+                  populatedReply.authorName = replyAuthor ? `${replyAuthor.firstName} ${replyAuthor.lastName}` : 'Unknown User';
+                  populatedReply.authorEmail = replyAuthor?.email || '';
+                  populatedReply.authorAvatar = replyAuthor?.avatar || null;
+                } else {
+                  populatedReply.authorName = 'Unknown User';
+                  populatedReply.authorAvatar = null;
+                }
+                
+                return populatedReply;
+              })
+            );
+            populatedComment.replies = populatedReplies;
+          }
+          
+          return populatedComment;
+        })
+      );
+      populatedTask.comments = populatedComments;
+    }
+
     return NextResponse.json({
       success: true,
-      data: task
+      data: populatedTask
     });
 
   } catch (error) {
@@ -96,6 +179,18 @@ export async function PUT(
       });
       
       const updatedTask = await TaskModel.update(id, updateData);
+      
+      // Chỉ tạo notification khi task được hoàn thành (status = 'completed')
+      if (updatedTask && body.status === 'completed') {
+        await createTaskUpdatedNotification(
+          id,
+          task.title,
+          'status',
+          'completed',
+          userId.toString(),
+          task.createdBy.toString()
+        );
+      }
       
       return NextResponse.json({
         success: true,

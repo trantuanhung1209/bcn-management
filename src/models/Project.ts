@@ -399,7 +399,7 @@ export class ProjectModel {
     
     const [totalTasks, completedTasks] = await Promise.all([
       tasksCollection.countDocuments({ project: projectObjectId }),
-      tasksCollection.countDocuments({ project: projectObjectId, status: 'done' as any })
+      tasksCollection.countDocuments({ project: projectObjectId, status: 'completed' as any })
     ]);
     
     const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;

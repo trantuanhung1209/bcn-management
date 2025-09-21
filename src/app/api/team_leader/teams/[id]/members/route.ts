@@ -127,6 +127,75 @@ export async function POST(
       );
     }
 
+    // Kiểm tra xem có userId trong body không (new approach)
+    if (body.userId) {
+      // Thêm user có sẵn vào team
+      const { userId } = body;
+
+      if (!ObjectId.isValid(userId)) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid user ID' },
+          { status: 400 }
+        );
+      }
+
+      // Kiểm tra user có tồn tại không
+      const user = await UserModel.findById(userId);
+      if (!user) {
+        return NextResponse.json(
+          { success: false, error: 'User not found' },
+          { status: 404 }
+        );
+      }
+
+      // Kiểm tra user đã có team chưa
+      if (user.teams && user.teams.length > 0) {
+        return NextResponse.json(
+          { success: false, error: 'User already belongs to a team' },
+          { status: 400 }
+        );
+      }
+
+      // Kiểm tra team có tồn tại không
+      const team = await TeamModel.findById(id);
+      if (!team) {
+        return NextResponse.json(
+          { success: false, error: 'Team not found' },
+          { status: 404 }
+        );
+      }
+
+      // Thêm user vào team
+      await TeamModel.addMember(id, new ObjectId(userId));
+      
+      // Cập nhật user's teams
+      await UserModel.addTeam(userId, new ObjectId(id));
+
+      // Chuẩn bị dữ liệu trả về
+      const newMemberData = {
+        id: user._id?.toString(),
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        role: 'member',
+        avatar: user.avatar,
+        status: 'active',
+        joinedDate: new Date().toISOString().split('T')[0],
+        gender: user.gender || 'Khác',
+        birthday: user.birthday || '',
+        studentId: user.studentId || '',
+        academicYear: user.academicYear || '',
+        field: user.field || 'Web',
+        isUP: user.isUP || false
+      };
+
+      return NextResponse.json({
+        success: true,
+        data: newMemberData,
+        message: 'Member added successfully'
+      }, { status: 201 });
+    }
+
+    // Legacy approach - Tạo user mới (giữ lại để tương thích)
     const { 
       name, 
       email, 

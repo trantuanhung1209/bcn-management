@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || '';
     const role = searchParams.get('role') || '';
     const isActive = searchParams.get('deleted') !== 'true';
+    const noTeam = searchParams.get('noTeam') === 'true';
     
     // Lấy thông tin user để xác định quyền truy cập
     const userId = searchParams.get('userId');
@@ -31,6 +32,11 @@ export async function GET(request: NextRequest) {
       filters.role = role;
     }
 
+    // Nếu yêu cầu lấy user chưa có team
+    if (noTeam) {
+      filters.noTeam = true;
+    }
+
     // Get users with pagination
     let { users, total } = await UserModel.findAll(filters);
 
@@ -46,6 +52,14 @@ export async function GET(request: NextRequest) {
       const { password, ...userWithoutPassword } = user;
       return userWithoutPassword;
     });
+
+    // Nếu yêu cầu danh sách user không có team (cho team leader)
+    if (noTeam) {
+      return NextResponse.json({
+        success: true,
+        data: safeUsers
+      });
+    }
 
     return NextResponse.json({
       users: safeUsers,

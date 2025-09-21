@@ -229,9 +229,9 @@ export default function MemberProjectsPage() {
               />
               
               <div className="flex gap-2">
-                <Button onClick={handleSearch} className="flex-1">
+                <button onClick={handleSearch} className="flex-1 neumorphic-button">
                   Tìm kiếm
-                </Button>
+                </button>
                 <Button variant="secondary" onClick={handleReset}>
                   Đặt lại
                 </Button>

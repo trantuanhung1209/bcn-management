@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
           
           // Count completed tasks (status === 'done')
           const completedTasks = allTasks.filter(task => 
-            task.status === TaskStatus.DONE
+            task.status === TaskStatus.COMPLETED
           ).length;
 
           console.log(`Project ${project.name}: ${completedTasks}/${totalTasks} tasks completed`);

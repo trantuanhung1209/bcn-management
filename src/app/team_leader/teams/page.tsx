@@ -18,7 +18,7 @@ const UPAvatar: React.FC<{ name: string; className?: string }> = ({ name, classN
         <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 rounded-full animate-pulse opacity-75"></div>
         <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 rounded-full animate-spin" style={{ animation: 'spin 3s linear infinite' }}></div>
         <div className="relative w-8 h-8 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-lg">
-          {name.charAt(0)}
+          {name?.charAt(0) || '?'}
         </div>
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
           <span className="text-[8px] text-yellow-900">★</span>
@@ -71,7 +71,7 @@ const UPAvatar: React.FC<{ name: string; className?: string }> = ({ name, classN
 // Regular Avatar Component
 const RegularAvatar: React.FC<{ name: string; className?: string }> = ({ name, className = '' }) => (
   <div className={`w-8 h-8 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full flex items-center justify-center text-white text-xs font-bold ${className}`}>
-    {name.charAt(0)}
+    {name?.charAt(0) || '?'}
   </div>
 );
 
@@ -105,15 +105,12 @@ interface Team {
 const ManagerTeamsPage: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberEmail, setNewMemberEmail] = useState('');
-  const [newMemberGender, setNewMemberGender] = useState<'Nam' | 'Nữ' | 'Khác'>('Nam');
-  const [newMemberBirthday, setNewMemberBirthday] = useState('');
-  const [newMemberStudentId, setNewMemberStudentId] = useState('');
-  const [newMemberAcademicYear, setNewMemberAcademicYear] = useState('');
-  const [newMemberField, setNewMemberField] = useState<'Web' | 'App'>('Web');
-  const [newMemberIsUP, setNewMemberIsUP] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<TeamMember[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
   
   // Filter and search states
   const [searchTerm, setSearchTerm] = useState('');
@@ -171,8 +168,45 @@ const ManagerTeamsPage: React.FC = () => {
     fetchTeamData();
   }, []);
 
+  // Fetch available users (users without team)
+  const fetchAvailableUsers = async () => {
+    try {
+      setIsLoadingUsers(true);
+      const response = await fetch('/api/users?noTeam=true');
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Transform API data to match TeamMember interface
+        const transformedUsers = data.data.map((user: any) => ({
+          id: user._id?.toString() || user.id,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || 'Unknown',
+          email: user.email || '',
+          role: 'member' as const,
+          avatar: user.avatar,
+          status: user.isActive ? 'active' as const : 'inactive' as const,
+          joinedDate: user.createdAt ? new Date(user.createdAt).toISOString().split('T')[0] : '',
+          gender: user.gender || 'Khác' as const,
+          birthday: user.birthday || '',
+          studentId: user.studentId || '',
+          academicYear: user.academicYear || '',
+          field: user.field || 'Web' as const,
+          isUP: user.isUP || false
+        }));
+        
+        setAvailableUsers(transformedUsers);
+      } else {
+        setAvailableUsers([]);
+      }
+    } catch (error) {
+      console.error('Error fetching available users:', error);
+      setAvailableUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
   const handleAddMember = async () => {
-    if (newMemberName.trim() && newMemberEmail.trim() && teams.length > 0) {
+    if (selectedUserId && teams.length > 0) {
       try {
         const response = await fetch(`/api/team_leader/teams/${teams[0].id}/members`, {
           method: 'POST',
@@ -180,14 +214,7 @@ const ManagerTeamsPage: React.FC = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            name: newMemberName,
-            email: newMemberEmail,
-            gender: newMemberGender,
-            birthday: newMemberBirthday,
-            studentId: newMemberStudentId,
-            academicYear: newMemberAcademicYear,
-            field: newMemberField,
-            isUP: newMemberIsUP
+            userId: selectedUserId
           }),
         });
 
@@ -201,16 +228,10 @@ const ManagerTeamsPage: React.FC = () => {
               : team
           ));
 
-          // Reset form
-          setNewMemberName('');
-          setNewMemberEmail('');
-          setNewMemberGender('Nam');
-          setNewMemberBirthday('');
-          setNewMemberStudentId('');
-          setNewMemberAcademicYear('');
-          setNewMemberField('Web');
-          setNewMemberIsUP(false);
+          // Reset form và cập nhật danh sách user có sẵn
+          setSelectedUserId('');
           setShowAddMemberModal(false);
+          fetchAvailableUsers(); // Refresh danh sách user có sẵn
         } else {
           alert(data.error || 'Có lỗi xảy ra khi thêm thành viên');
         }
@@ -258,30 +279,44 @@ const ManagerTeamsPage: React.FC = () => {
     });
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (teams.length > 0) {
-      try {
-        const response = await fetch(`/api/team_leader/teams/${teams[0].id}/members?memberId=${memberId}`, {
-          method: 'DELETE',
-        });
+  const handleRemoveMember = (member: TeamMember) => {
+    setMemberToDelete(member);
+    setShowDeleteConfirm(true);
+  };
 
-        const data = await response.json();
+  const confirmDeleteMember = async () => {
+    if (!memberToDelete || teams.length === 0) return;
 
-        if (data.success) {
-          // Xóa member khỏi state
-          setTeams(prev => prev.map(team => 
-            team.id === teams[0].id 
-              ? { ...team, members: team.members.filter(member => member.id !== memberId) }
-              : team
-          ));
-        } else {
-          alert(data.error || 'Có lỗi xảy ra khi xóa thành viên');
-        }
-      } catch (error) {
-        console.error('Error removing member:', error);
-        alert('Có lỗi xảy ra khi xóa thành viên');
+    try {
+      const response = await fetch(`/api/team_leader/teams/${teams[0].id}/members?memberId=${memberToDelete.id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Xóa member khỏi state
+        setTeams(prev => prev.map(team => 
+          team.id === teams[0].id 
+            ? { ...team, members: team.members.filter(member => member.id !== memberToDelete.id) }
+            : team
+        ));
+        
+        // Reset states
+        setShowDeleteConfirm(false);
+        setMemberToDelete(null);
+      } else {
+        alert(data.error || 'Có lỗi xảy ra khi xóa thành viên');
       }
+    } catch (error) {
+      console.error('Error removing member:', error);
+      alert('Có lỗi xảy ra khi xóa thành viên');
     }
+  };
+
+  const cancelDeleteMember = () => {
+    setShowDeleteConfirm(false);
+    setMemberToDelete(null);
   };
 
   const getRoleColor = (role: string) => {
@@ -433,7 +468,10 @@ const ManagerTeamsPage: React.FC = () => {
               })()})
             </h3>
             <button 
-              onClick={() => setShowAddMemberModal(true)}
+              onClick={() => {
+                setShowAddMemberModal(true);
+                fetchAvailableUsers();
+              }}
               className="neumorphic-button text-sm px-4 py-2"
             >
               ➕ Thêm thành viên
@@ -456,8 +494,8 @@ const ManagerTeamsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filterMembers(teams[0].members).map((member, index) => (
-                  <tr key={`${member.id}-${index}`} className="hover:bg-gray-50 transition-colors duration-200">
+                {filterMembers(teams[0].members).map((member) => (
+                  <tr key={`team-member-${member.id}`} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="px-4 py-3">
                       <div className="flex items-center space-x-3">
                         {member.isUP ? (
@@ -496,7 +534,7 @@ const ManagerTeamsPage: React.FC = () => {
                         }`}></span>
                         {member.role !== 'manager' && (
                           <button
-                            onClick={() => handleRemoveMember(member.id)}
+                            onClick={() => handleRemoveMember(member)}
                             className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors duration-200 cursor-pointer"
                             title="Xóa thành viên"
                           >
@@ -521,147 +559,78 @@ const ManagerTeamsPage: React.FC = () => {
         {/* Add Member Modal */}
         {showAddMemberModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-            <div className="bg-[var(--color-background)] rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto section-neumorphic">
+            <div className="bg-[var(--color-background)] rounded-2xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto section-neumorphic">
               <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4">
                 Thêm Thành Viên Mới
               </h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    Họ và tên *
+                    Chọn thành viên từ danh sách
                   </label>
-                  <input
-                    type="text"
-                    value={newMemberName}
-                    onChange={(e) => setNewMemberName(e.target.value)}
-                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
-                    style={{
-                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
-                    }}
-                    placeholder="Nhập họ và tên"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={newMemberEmail}
-                    onChange={(e) => setNewMemberEmail(e.target.value)}
-                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
-                    style={{
-                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
-                    }}
-                    placeholder="Nhập email"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    Giới tính
-                  </label>
-                  <select
-                    value={newMemberGender}
-                    onChange={(e) => setNewMemberGender(e.target.value as 'Nam' | 'Nữ' | 'Khác')}
-                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
-                    style={{
-                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
-                    }}
-                  >
-                    <option value="Nam">Nam</option>
-                    <option value="Nữ">Nữ</option>
-                    <option value="Khác">Khác</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    Sinh nhật
-                  </label>
-                  <input
-                    type="date"
-                    value={newMemberBirthday}
-                    onChange={(e) => setNewMemberBirthday(e.target.value)}
-                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
-                    style={{
-                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
-                    }}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    MSSV
-                  </label>
-                  <input
-                    type="text"
-                    value={newMemberStudentId}
-                    onChange={(e) => setNewMemberStudentId(e.target.value)}
-                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] placeholder-[var(--color-text-placeholder)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
-                    style={{
-                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
-                    }}
-                    placeholder="Nhập MSSV"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    Niên khóa
-                  </label>
-                  <select
-                    value={newMemberAcademicYear}
-                    onChange={(e) => setNewMemberAcademicYear(e.target.value)}
-                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
-                    style={{
-                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
-                    }}
-                  >
-                    <option value="">Chọn niên khóa</option>
-                    <option value="K20">K20</option>
-                    <option value="K21">K21</option>
-                    <option value="K22">K22</option>
-                    <option value="K23">K23</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
-                    Lĩnh vực
-                  </label>
-                  <select
-                    value={newMemberField}
-                    onChange={(e) => setNewMemberField(e.target.value as 'Web' | 'App')}
-                    className="w-full px-3 py-2 neumorphic-input rounded-xl bg-[var(--color-background)] text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-all duration-200 shadow-inner"
-                    style={{
-                      boxShadow: 'inset 4px 4px 8px rgba(22, 17, 29, 0.1), inset -4px -4px 8px #FAFBFF'
-                    }}
-                  >
-                    <option value="Web">Web</option>
-                    <option value="App">App</option>
-                  </select>
-                </div>
-                
-                <div className="md:col-span-2">
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="checkbox"
-                      id="isUP"
-                      checked={newMemberIsUP}
-                      onChange={(e) => setNewMemberIsUP(e.target.checked)}
-                      className="w-4 h-4 text-[var(--color-accent)] bg-[var(--color-background)] border-gray-300 rounded focus:ring-[var(--color-accent)] focus:ring-2"
-                    />
-                    <label htmlFor="isUP" className="text-sm font-medium text-[var(--color-text-primary)] flex items-center space-x-2">
-                      <span>Thành viên đặc biệt (UP)</span>
-                      <span className="text-yellow-500">★</span>
-                    </label>
-                  </div>
-                  <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                    Thành viên UP sẽ có avatar đặc biệt với hiệu ứng animation
-                  </p>
+                  
+                  {isLoadingUsers ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="w-6 h-6 border-2 border-[var(--color-accent)] border-t-transparent rounded-full animate-spin"></div>
+                      <span className="ml-2 text-[var(--color-text-secondary)]">Đang tải danh sách...</span>
+                    </div>
+                  ) : availableUsers.length === 0 ? (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400 text-4xl mb-2">👤</div>
+                      <p className="text-[var(--color-text-secondary)]">
+                        Không có user nào chưa tham gia team
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                      {availableUsers.map((user) => (
+                        <div
+                          key={`available-user-${user.id}`}
+                          onClick={() => setSelectedUserId(user.id)}
+                          className={`p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                            selectedUserId === user.id
+                              ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10'
+                              : 'border-gray-200 hover:border-[var(--color-accent)]/50 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            {user.isUP ? (
+                              <UPAvatar name={user.name} />
+                            ) : (
+                              <RegularAvatar name={user.name} />
+                            )}
+                            <div className="flex-1">
+                              <h3 className="font-medium text-[var(--color-text-primary)]">
+                                {user.name}
+                              </h3>
+                              <p className="text-sm text-[var(--color-text-secondary)]">
+                                {user.email}
+                              </p>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded">
+                                  {user.studentId}
+                                </span>
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                  {user.academicYear}
+                                </span>
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  user.field === 'Web' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700'
+                                }`}>
+                                  {user.field}
+                                </span>
+                              </div>
+                            </div>
+                            {selectedUserId === user.id && (
+                              <div className="text-[var(--color-accent)]">
+                                ✓
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -669,14 +638,7 @@ const ManagerTeamsPage: React.FC = () => {
                 <button
                   onClick={() => {
                     setShowAddMemberModal(false);
-                    setNewMemberName('');
-                    setNewMemberEmail('');
-                    setNewMemberGender('Nam');
-                    setNewMemberBirthday('');
-                    setNewMemberStudentId('');
-                    setNewMemberAcademicYear('');
-                    setNewMemberField('Web');
-                    setNewMemberIsUP(false);
+                    setSelectedUserId('');
                   }}
                   className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
                 >
@@ -684,10 +646,59 @@ const ManagerTeamsPage: React.FC = () => {
                 </button>
                 <button
                   onClick={handleAddMember}
-                  disabled={!newMemberName.trim() || !newMemberEmail.trim()}
+                  disabled={!selectedUserId}
                   className="flex-1 neumorphic-button disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Thêm thành viên
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && memberToDelete && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <div className="bg-[var(--color-background)] rounded-2xl p-6 w-full max-w-md section-neumorphic">
+              <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-4">
+                Xác nhận xóa thành viên
+              </h2>
+              
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                  {memberToDelete.isUP ? (
+                    <UPAvatar name={memberToDelete.name} />
+                  ) : (
+                    <RegularAvatar name={memberToDelete.name} />
+                  )}
+                  <div>
+                    <h3 className="font-medium text-[var(--color-text-primary)]">
+                      {memberToDelete.name}
+                    </h3>
+                    <p className="text-sm text-[var(--color-text-secondary)]">
+                      {memberToDelete.email}
+                    </p>
+                  </div>
+                </div>
+                
+                <p className="text-[var(--color-text-secondary)]">
+                  Bạn có chắc chắn muốn xóa thành viên này khỏi team không? 
+                  Hành động này không thể hoàn tác.
+                </p>
+              </div>
+
+              <div className="flex space-x-3 mt-6">
+                <button
+                  onClick={cancelDeleteMember}
+                  className="flex-1 py-3 px-4 rounded-xl bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors duration-200 cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={confirmDeleteMember}
+                  className="flex-1 py-3 px-4 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors duration-200 cursor-pointer"
+                >
+                  Xóa thành viên
                 </button>
               </div>
             </div>

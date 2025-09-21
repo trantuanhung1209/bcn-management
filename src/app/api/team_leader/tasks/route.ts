@@ -5,6 +5,7 @@ import { ProjectModel } from '@/models/Project';
 import { getAuthenticatedUserId } from '@/lib/auth-middleware';
 import { ObjectId } from 'mongodb';
 import { TaskStatus, TaskPriority } from '@/types';
+import { createTaskAssignedNotification } from '@/lib/notification-utils';
 
 // POST /api/team_leader/tasks - Create new task (Team Leader only)
 export async function POST(request: NextRequest) {
@@ -110,6 +111,24 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.warn('Failed to log activity:', error);
+    }
+
+    // Tạo notification cho member được giao task (chỉ khi task được gán cho ai đó)
+    if (assignedTo && assignedTo.trim() !== '' && validAssignedTo && !validAssignedTo.equals(new ObjectId('000000000000000000000000'))) {
+      try {
+        const projectData = await ProjectModel.findById(project);
+        if (projectData) {
+          await createTaskAssignedNotification(
+            task._id!.toString(),
+            task.title,
+            projectData.name,
+            userId.toString(),
+            assignedTo
+          );
+        }
+      } catch (error) {
+        console.warn('Failed to create task notification:', error);
+      }
     }
 
     return NextResponse.json({

@@ -62,13 +62,13 @@ export class TaskModel {
     };
     
     // Auto-complete task when progress reaches 100%
-    if (updateData.progress === 100 && currentTask.status !== 'done') {
-      updateDoc.status = 'done' as TaskStatus;
+    if (updateData.progress === 100 && currentTask.status !== 'completed') {
+      updateDoc.status = 'completed' as TaskStatus;
       updateDoc.completedAt = new Date();
     }
-    
-    // Auto-set progress to 100% when status is done
-    if (updateData.status === 'done' && currentTask.progress !== 100) {
+
+    // Auto-set progress to 100% when status is completed
+    if (updateData.status === 'completed' && currentTask.progress !== 100) {
       updateDoc.progress = 100;
       updateDoc.completedAt = new Date();
     }
@@ -334,7 +334,7 @@ export class TaskModel {
     
     // Auto-complete task when progress reaches 100%
     if (progress >= 100) {
-      updateData.status = 'done' as TaskStatus;
+      updateData.status = 'completed' as TaskStatus;
       updateData.completedAt = new Date();
       updateData.progress = 100;
     } else if (progress > 0 && task.status === 'todo') {
@@ -380,7 +380,7 @@ export class TaskModel {
     };
     
     // Auto-set progress based on status
-    if (status === 'done') {
+    if (status === 'completed') {
       updateData.progress = 100;
       updateData.completedAt = new Date();
     } else if (status === 'in_progress' && task.progress === 0) {
@@ -440,11 +440,11 @@ export class TaskModel {
       collection.countDocuments({ ...query, status: 'todo' }),
       collection.countDocuments({ ...query, status: 'in_progress' }),
       collection.countDocuments({ ...query, status: 'review' }),
-      collection.countDocuments({ ...query, status: 'done' }),
+      collection.countDocuments({ ...query, status: 'completed' }),
       collection.countDocuments({
         ...query,
         dueDate: { $lt: new Date() },
-        status: { $ne: 'done' as TaskStatus }
+        status: { $ne: 'completed' as TaskStatus }
       }),
       collection.find(query, { projection: { progress: 1 } }).toArray()
     ]);
@@ -475,7 +475,9 @@ export class TaskModel {
       content,
       author: authorObjectId,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      parentCommentId: null, // Top-level comment
+      replies: [] // Initialize empty replies array
     };
     
     const result = await collection.updateOne(
@@ -490,6 +492,46 @@ export class TaskModel {
       // Log activity
       await UserModel.logActivity(authorObjectId, 'add_comment', 'task', taskObjectId, {
         comment: content
+      });
+    }
+    
+    return result.modifiedCount > 0;
+  }
+
+  // Add reply to a comment
+  static async addReply(taskId: string | ObjectId, parentCommentId: string, content: string, authorId: string | ObjectId): Promise<boolean> {
+    const collection = await getTasksCollection();
+    const taskObjectId = typeof taskId === 'string' ? new ObjectId(taskId) : taskId;
+    const authorObjectId = typeof authorId === 'string' ? new ObjectId(authorId) : authorId;
+    const parentCommentObjectId = new ObjectId(parentCommentId);
+    
+    const reply = {
+      _id: new ObjectId(),
+      content,
+      author: authorObjectId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      parentCommentId: parentCommentId,
+      replies: [] // Nested replies can also have replies
+    };
+    
+    // Find the parent comment and add reply to its replies array
+    const result = await collection.updateOne(
+      { 
+        _id: taskObjectId,
+        'comments._id': parentCommentObjectId
+      },
+      { 
+        $push: { 'comments.$.replies': reply },
+        $set: { updatedAt: new Date() }
+      }
+    );
+    
+    if (result.modifiedCount > 0) {
+      // Log activity
+      await UserModel.logActivity(authorObjectId, 'add_reply', 'task', taskObjectId, {
+        reply: content,
+        parentCommentId: parentCommentId
       });
     }
     

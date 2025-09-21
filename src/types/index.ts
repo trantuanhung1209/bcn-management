@@ -32,7 +32,18 @@ export enum TaskStatus {
   TODO = 'todo',
   IN_PROGRESS = 'in_progress',
   REVIEW = 'review',
-  DONE = 'done'
+  COMPLETED = 'completed'
+}
+
+// Notification types
+export enum NotificationType {
+  TASK_ASSIGNED = 'task_assigned',
+  TASK_UPDATED = 'task_updated',
+  PROJECT_ASSIGNED = 'project_assigned',
+  PROJECT_UPDATED = 'project_updated',
+  TEAM_INVITATION = 'team_invitation',
+  DEADLINE_REMINDER = 'deadline_reminder',
+  SYSTEM_ANNOUNCEMENT = 'system_announcement'
 }
 
 // User interface
@@ -51,6 +62,7 @@ export interface User {
   studentId?: string;
   academicYear?: string;
   field?: 'Web' | 'App';
+  isUP?: boolean;
   teams: ObjectId[];
   projects: ObjectId[];
   isActive: boolean;
@@ -141,6 +153,23 @@ export interface ActivityLog {
   targetId: ObjectId;
   details: Record<string, any>;
   createdAt: Date;
+}
+
+// Notification interface
+export interface Notification {
+  _id?: ObjectId;
+  title: string;
+  message: string;
+  type: NotificationType;
+  recipient: ObjectId;
+  sender?: ObjectId;
+  isRead: boolean;
+  data?: Record<string, any>; // Additional data for the notification
+  targetType?: string; // 'project', 'task', 'team'
+  targetId?: ObjectId;
+  actionUrl?: string; // URL to navigate when clicked
+  createdAt: Date;
+  readAt?: Date;
 }
 
 // Dashboard Stats interface

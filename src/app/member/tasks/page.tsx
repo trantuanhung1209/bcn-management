@@ -75,7 +75,7 @@ const MemberTasksPage: React.FC = () => {
             ? { 
                 ...task, 
                 status: newStatus,
-                progress: newStatus === TaskStatus.DONE ? 100 : task.progress
+                progress: newStatus === TaskStatus.COMPLETED ? 100 : task.progress
               }
             : task
         )
@@ -116,7 +116,7 @@ const MemberTasksPage: React.FC = () => {
             ? { 
                 ...task, 
                 progress: newProgress,
-                status: newProgress === 100 ? TaskStatus.DONE : task.status
+                status: newProgress === 100 ? TaskStatus.COMPLETED : task.status
               }
             : task
         )
@@ -150,10 +150,10 @@ const MemberTasksPage: React.FC = () => {
 
   const filteredTasks = tasks.filter((task: Task) => {
     // Filter by tab first
-    if (activeTab === 'active' && task.status === TaskStatus.DONE) {
+    if (activeTab === 'active' && task.status === TaskStatus.COMPLETED) {
       return false; // Hide completed tasks from active tab
     }
-    if (activeTab === 'completed' && task.status !== TaskStatus.DONE) {
+    if (activeTab === 'completed' && task.status !== TaskStatus.COMPLETED) {
       return false; // Show only completed tasks in completed tab
     }
     
@@ -164,7 +164,7 @@ const MemberTasksPage: React.FC = () => {
 
   const getStatusColor = (status: TaskStatus) => {
     switch (status) {
-      case TaskStatus.DONE:
+      case TaskStatus.COMPLETED:
         return 'bg-green-100 text-green-800';
       case TaskStatus.IN_PROGRESS:
         return 'bg-blue-100 text-blue-800';
@@ -302,7 +302,7 @@ const MemberTasksPage: React.FC = () => {
                 <span className="w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
                 <span>Active</span>
                 <span className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full text-xs font-semibold">
-                  {tasks.filter(t => t.status !== TaskStatus.DONE).length}
+                  {tasks.filter(t => t.status !== TaskStatus.COMPLETED).length}
                 </span>
               </div>
             </button>
@@ -318,7 +318,7 @@ const MemberTasksPage: React.FC = () => {
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
                 <span>Done</span>
                 <span className="bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full text-xs font-semibold">
-                  {tasks.filter(t => t.status === TaskStatus.DONE).length}
+                  {tasks.filter(t => t.status === TaskStatus.COMPLETED).length}
                 </span>
               </div>
             </button>
@@ -395,7 +395,7 @@ const MemberTasksPage: React.FC = () => {
               </div>
               <div className="text-center">
                 <p className="text-3xl font-bold text-gray-900 mb-1">
-                  {tasks.filter((t: Task) => t.status === TaskStatus.DONE).length}
+                  {tasks.filter((t: Task) => t.status === TaskStatus.COMPLETED).length}
                 </p>
                 <p className="text-gray-600 font-medium">Hoàn thành</p>
                 <p className="text-xs text-gray-500 mt-1">Tuyệt vời!</p>
@@ -478,7 +478,7 @@ const MemberTasksPage: React.FC = () => {
                           {task.status === TaskStatus.TODO && '⏳'}
                           {task.status === TaskStatus.IN_PROGRESS && '🔄'}
                           {task.status === TaskStatus.REVIEW && '👀'}
-                          {task.status === TaskStatus.DONE && '✅'}
+                          {task.status === TaskStatus.COMPLETED && '✅'}
                         </span>
                       </div>
                       
@@ -517,7 +517,7 @@ const MemberTasksPage: React.FC = () => {
                         style={{ width: `${task.progress}%` }}
                       ></div>
                     </div>
-                    {task.status !== TaskStatus.DONE && (
+                    {task.status !== TaskStatus.COMPLETED && (
                       <div className="mt-2">
                         <input
                           type="range"
@@ -533,7 +533,7 @@ const MemberTasksPage: React.FC = () => {
 
                   {/* Actions */}
                   <div className="flex gap-2 w-full">
-                    {task.status !== TaskStatus.DONE && (
+                    {task.status !== TaskStatus.COMPLETED && (
                       <>
                         {task.status === TaskStatus.TODO && (
                           <button
@@ -546,7 +546,7 @@ const MemberTasksPage: React.FC = () => {
                         
                         {task.status === TaskStatus.IN_PROGRESS && (
                           <button
-                            onClick={() => updateTaskStatus(task._id, TaskStatus.DONE)}
+                            onClick={() => updateTaskStatus(task._id, TaskStatus.COMPLETED)}
                             className="flex-1 px-3 py-1.5 text-xs bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-md hover:from-green-600 hover:to-green-700 transform hover:scale-105 transition-all duration-200 shadow cursor-pointer"
                           >
                             ✅ Done
@@ -554,7 +554,7 @@ const MemberTasksPage: React.FC = () => {
                         )}
                       </>
                     )}
-                    {task.status === TaskStatus.DONE && (
+                    {task.status === TaskStatus.COMPLETED && (
                       <div className="flex items-center justify-center gap-2 w-full py-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-md border border-green-200">
                         <span className="text-lg">🎉</span>
                         <span className="text-xs text-green-700 font-bold">Completed!</span>

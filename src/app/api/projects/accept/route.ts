@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ProjectModel } from '@/models/Project';
 import { UserModel } from '@/models/User';
 import { getAuthenticatedUserId } from '@/lib/auth-middleware';
+import { createProjectAcceptedNotification } from '@/lib/notification-utils';
 
 // POST /api/projects/accept - Manager accepts assigned project
 export async function POST(request: NextRequest) {
@@ -31,6 +32,17 @@ export async function POST(request: NextRequest) {
     const success = await ProjectModel.acceptProject(projectId, userId);
     
     if (success) {
+      // Tạo notification cho admin
+      const project = await ProjectModel.findById(projectId);
+      if (project) {
+        await createProjectAcceptedNotification(
+          projectId,
+          project.name,
+          userId.toString(),
+          project.createdBy.toString()
+        );
+      }
+      
       return NextResponse.json({
         success: true,
         message: 'Project accepted successfully. You can now manage it.'

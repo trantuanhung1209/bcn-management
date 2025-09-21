@@ -1,5 +1,5 @@
 import { MongoClient, Db, Collection } from "mongodb";
-import { User, Team, Project, Task, ActivityLog } from "@/types";
+import { User, Team, Project, Task, ActivityLog, Notification } from "@/types";
 
 declare global {
   // eslint-disable-next-line no-var
@@ -60,6 +60,11 @@ export async function getActivityLogsCollection(): Promise<Collection<ActivityLo
   return db.collection<ActivityLog>("activity_logs");
 }
 
+export async function getNotificationsCollection(): Promise<Collection<Notification>> {
+  const db = await getDb();
+  return db.collection<Notification>("notifications");
+}
+
 // Database initialization function
 export async function initializeDatabase() {
   const db = await getDb();
@@ -68,7 +73,7 @@ export async function initializeDatabase() {
   const collections = await db.listCollections().toArray();
   const collectionNames = collections.map(col => col.name);
   
-  const requiredCollections = ['users', 'teams', 'projects', 'tasks', 'activity_logs'];
+  const requiredCollections = ['users', 'teams', 'projects', 'tasks', 'activity_logs', 'notifications'];
   
   for (const collectionName of requiredCollections) {
     if (!collectionNames.includes(collectionName)) {
@@ -105,4 +110,10 @@ export async function initializeDatabase() {
   await activityLogsCollection.createIndex({ user: 1 });
   await activityLogsCollection.createIndex({ target: 1, targetId: 1 });
   await activityLogsCollection.createIndex({ createdAt: -1 });
+  
+  const notificationsCollection = await getNotificationsCollection();
+  await notificationsCollection.createIndex({ recipient: 1 });
+  await notificationsCollection.createIndex({ isRead: 1 });
+  await notificationsCollection.createIndex({ createdAt: -1 });
+  await notificationsCollection.createIndex({ type: 1 });
 }

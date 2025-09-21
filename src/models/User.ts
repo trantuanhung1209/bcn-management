@@ -138,6 +138,7 @@ export class UserModel {
     search?: string;
     page?: number;
     limit?: number;
+    noTeam?: boolean;
   } = {}): Promise<{ users: User[]; total: number }> {
     const collection = await getUsersCollection();
     
@@ -147,12 +148,34 @@ export class UserModel {
     if (filters.department) query.department = filters.department;
     if (filters.isActive !== undefined) query.isActive = filters.isActive;
     
-    if (filters.search) {
-      query.$or = [
-        { firstName: { $regex: filters.search, $options: 'i' } },
-        { lastName: { $regex: filters.search, $options: 'i' } },
-        { email: { $regex: filters.search, $options: 'i' } },
+    // Filter users without teams
+    if (filters.noTeam) {
+      query.$and = [
+        {
+          $or: [
+            { teams: { $exists: false } },
+            { teams: { $size: 0 } }
+          ]
+        }
       ];
+      // Chỉ lấy user với role 'member' cho team leader
+      query.role = 'member';
+    }
+    
+    if (filters.search) {
+      const searchQuery = {
+        $or: [
+          { firstName: { $regex: filters.search, $options: 'i' } },
+          { lastName: { $regex: filters.search, $options: 'i' } },
+          { email: { $regex: filters.search, $options: 'i' } },
+        ]
+      };
+      
+      if (query.$and) {
+        query.$and.push(searchQuery);
+      } else {
+        query.$and = [searchQuery];
+      }
     }
     
     const page = filters.page || 1;

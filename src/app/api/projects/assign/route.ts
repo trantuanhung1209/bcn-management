@@ -3,6 +3,7 @@ import { ProjectModel } from '@/models/Project';
 import { TeamModel } from '@/models/Team';
 import { UserModel } from '@/models/User';
 import { getAuthenticatedUserId } from '@/lib/auth-middleware';
+import { createProjectAssignedNotification } from '@/lib/notification-utils';
 
 // POST /api/projects/assign - Admin assigns project to team
 export async function POST(request: NextRequest) {
@@ -50,6 +51,17 @@ export async function POST(request: NextRequest) {
     const success = await ProjectModel.assignToTeam(projectId, teamId, team.teamLeader);
     
     if (success) {
+      // Tạo notification cho team leader
+      const project = await ProjectModel.findById(projectId);
+      if (project) {
+        await createProjectAssignedNotification(
+          projectId,
+          project.name,
+          userId.toString(),
+          team.teamLeader.toString()
+        );
+      }
+      
       return NextResponse.json({
         success: true,
         message: 'Project assigned to team successfully. Manager needs to accept it.'

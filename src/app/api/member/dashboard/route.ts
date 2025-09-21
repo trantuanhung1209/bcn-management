@@ -55,9 +55,34 @@ export async function GET(request: NextRequest) {
     console.log('📊 Task stats:', taskStats);
     
     // Get projects that the member is involved in
-    const memberProjects = await ProjectModel.findAll({
-      assignedTo: user.id,
-      limit: 10
+    // Instead of finding projects where user is assigned, 
+    // find projects from tasks that are assigned to the user
+    const projectIds = [...new Set(memberTasks.map(task => task.project).filter(Boolean))];
+    
+    let memberProjects: { projects: any[]; total: number } = { projects: [], total: 0 };
+    if (projectIds.length > 0) {
+      const projectsCollection = await ProjectModel.findAll({
+        isActive: true,
+        limit: 50  // Increased limit to get all relevant projects
+      });
+      
+      // Filter projects that have tasks assigned to this member
+      const relevantProjects = projectsCollection.projects.filter(project => 
+        projectIds.some(taskProjectId => 
+          project._id?.toString() === taskProjectId?.toString()
+        )
+      );
+      
+      memberProjects = {
+        projects: relevantProjects,
+        total: relevantProjects.length
+      };
+    }
+    
+    console.log('📊 Member projects found:', {
+      projectIds: projectIds.map(id => id?.toString()),
+      totalProjects: memberProjects.total,
+      projectNames: memberProjects.projects.map(p => p.name)
     });
 
     // Get recent activity - tasks updated in last 7 days
@@ -77,7 +102,7 @@ export async function GET(request: NextRequest) {
     const uncompletedTasks = memberTasks
       .filter(task => {
         // Get all tasks that are not done
-        return task.status !== TaskStatus.DONE;
+        return task.status !== TaskStatus.COMPLETED;
       })
       .sort((a, b) => {
         // Sort by priority (urgent > high > medium > low) then by due date
@@ -180,7 +205,7 @@ export async function GET(request: NextRequest) {
       recentActivity: recentTasks.map(task => ({
         _id: task._id?.toString(),
         title: task.title,
-        action: task.status === TaskStatus.DONE ? 'completed' : 'updated',
+        action: task.status === TaskStatus.COMPLETED ? 'completed' : 'updated',
         project: task.project?.toString(),
         updatedAt: task.updatedAt,
         progress: task.progress

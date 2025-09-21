@@ -4,6 +4,8 @@ import { UserModel } from '@/models/User';
 import { getAuthenticatedUserId } from '@/lib/auth-middleware';
 import { ObjectId } from 'mongodb';
 import { TaskStatus, TaskPriority } from '@/types';
+import { createTaskAssignedNotification } from '@/lib/notification-utils';
+import { ProjectModel } from '@/models/Project';
 
 // GET /api/tasks - Get tasks with filters
 export async function GET(request: NextRequest) {
@@ -124,6 +126,20 @@ export async function POST(request: NextRequest) {
     };
 
     const task = await TaskModel.create(taskData);
+
+    if (task) {
+      // Tạo notification cho member được giao task
+      const projectData = await ProjectModel.findById(project);
+      if (projectData) {
+        await createTaskAssignedNotification(
+          task._id!.toString(),
+          task.title,
+          projectData.name,
+          userId.toString(),
+          assignedTo
+        );
+      }
+    }
 
     return NextResponse.json({
       success: true,

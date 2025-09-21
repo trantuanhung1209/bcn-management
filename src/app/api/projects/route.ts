@@ -3,6 +3,10 @@ import { ProjectModel } from '@/models/Project';
 import { ObjectId } from 'mongodb';
 import { ProjectStatus, TaskPriority } from '@/types';
 import { filterProjectsForManager } from '@/lib/server-utils';
+import { 
+  createProjectCreatedNotification, 
+  getTeamLeaderIdFromTeam 
+} from '@/lib/notification-utils';
 
 // GET: Get all projects with filters và phân quyền theo team
 export async function GET(request: NextRequest) {
@@ -114,6 +118,24 @@ export async function POST(request: NextRequest) {
     };
 
     const project = await ProjectModel.create(projectData);
+    
+    // Gửi notification cho team leader nếu project được gán cho team
+    if (projectData.team && project) {
+      try {
+        const teamLeaderId = await getTeamLeaderIdFromTeam(projectData.team);
+        if (teamLeaderId && projectData.createdBy) {
+          await createProjectCreatedNotification(
+            project._id!.toString(),
+            project.name,
+            projectData.createdBy.toString(),
+            teamLeaderId
+          );
+        }
+      } catch (notificationError) {
+        console.warn('Failed to send notification for project creation:', notificationError);
+        // Không throw error vì project đã được tạo thành công
+      }
+    }
     
     return NextResponse.json({
       success: true,

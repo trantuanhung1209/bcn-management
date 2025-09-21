@@ -1,9 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
+import { 
+  MdDashboard, 
+  MdPeople, 
+  MdPerson, 
+  MdFolder, 
+  MdSettings, 
+  MdAssignment,
+  MdLogout,
+  MdAccessTime 
+} from 'react-icons/md';
 import LogoutConfirmModal from '@/components/ui/LogoutConfirmModal';
 
 interface SidebarProps {
@@ -19,9 +29,10 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<'admin' | 'team_leader' | 'member'>('member');
   const [isLoadingUser, setIsLoadingUser] = useState(false);
+  const [userDataFetched, setUserDataFetched] = useState(false); // Track if data was already fetched
 
-  // Fetch user data from API
-  const fetchUserData = async () => {
+  // Fetch user data from API (only once per session)
+  const fetchUserData = useCallback(async () => {
     if (typeof window === 'undefined') return;
 
     const userId = localStorage.getItem('userId');
@@ -29,6 +40,12 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
 
     if (!userId || !authToken) {
       console.log('No userId or authToken found in localStorage');
+      return;
+    }
+
+    // Skip if already fetched or currently loading
+    if (userDataFetched || isLoadingUser) {
+      console.log('User data already fetched or loading, skipping...');
       return;
     }
 
@@ -54,6 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         setUserName(`${user.firstName} ${user.lastName}`);
         setUserAvatar(user.avatar || null);
         setCurrentRole(user.role || 'member');
+        setUserDataFetched(true); // Mark as fetched
         
         // Optional: Update localStorage with fresh data
         localStorage.setItem('userName', `${user.firstName} ${user.lastName}`);
@@ -75,13 +93,15 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
     } finally {
       setIsLoadingUser(false);
     }
-  };
+  }, [userDataFetched, isLoadingUser]);
 
   // Get user data from API and detect role
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Fetch user data from API first
-      fetchUserData();
+      // Only fetch if not already fetched
+      if (!userDataFetched) {
+        fetchUserData();
+      }
 
       // Detect role from userRole prop, URL, or localStorage
       if (userRole) {
@@ -107,43 +127,37 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         }
       }
     }
-  }, [userRole, pathname]);
+  }, [userRole, pathname, userDataFetched, fetchUserData]);
 
-  // Listen for storage changes and periodically refresh user data
+  // Listen for storage changes only (remove periodic refresh)
   useEffect(() => {
-    const handleStorageChange = () => {
-      // Re-fetch user data when localStorage changes (e.g., after login/logout)
-      const userId = localStorage.getItem('userId');
-      const authToken = localStorage.getItem('authToken');
-      
-      if (userId && authToken) {
-        fetchUserData();
-      } else {
-        // Clear user data if no auth info
-        setUserName('User Name');
-        setUserAvatar(null);
-        setCurrentRole('member');
+    const handleStorageChange = (e: StorageEvent) => {
+      // Only react to auth-related storage changes
+      if (e.key === 'authToken' || e.key === 'userId') {
+        const userId = localStorage.getItem('userId');
+        const authToken = localStorage.getItem('authToken');
+        
+        if (userId && authToken) {
+          // Reset fetch flag and fetch new data
+          setUserDataFetched(false);
+          fetchUserData();
+        } else {
+          // Clear user data if no auth info
+          setUserName('User Name');
+          setUserAvatar(null);
+          setCurrentRole('member');
+          setUserDataFetched(false);
+        }
       }
     };
 
-    // Listen for custom storage events (when localStorage is updated in same tab)
+    // Listen for custom storage events (when localStorage is updated in another tab)
     window.addEventListener('storage', handleStorageChange);
-    
-    // Also check for updates periodically (for same-tab updates)
-    const interval = setInterval(() => {
-      const userId = localStorage.getItem('userId');
-      const authToken = localStorage.getItem('authToken');
-      
-      if (userId && authToken && !isLoadingUser) {
-        fetchUserData();
-      }
-    }, 30000); // Refresh every 30 seconds
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
     };
-  }, [isLoadingUser]);
+  }, [fetchUserData]);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -165,6 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
     setUserName('User Name');
     setUserAvatar(null);
     setCurrentRole('member');
+    setUserDataFetched(false); // Reset fetch flag
     
     // Redirect to login page
     router.push('/auth/login');
@@ -173,7 +188,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   const getMenuItems = () => {
     const baseItems = [
       {
-        icon: '🏠',
+        icon: MdDashboard,
         label: 'Dashboard',
         href: `/${currentRole}/dashboard`,
         roles: ['admin', 'team_leader', 'member']
@@ -183,25 +198,25 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
     const roleSpecificItems = {
       admin: [
         {
-          icon: '👥',
+          icon: MdPeople,
           label: 'Teams',
           href: '/admin/teams',
           roles: ['admin']
         },
         {
-          icon: '👤',
+          icon: MdPerson,
           label: 'Users',
           href: '/admin/users',
           roles: ['admin']
         },
         {
-          icon: '📊',
+          icon: MdFolder,
           label: 'Projects',
           href: '/admin/projects',
           roles: ['admin']
         },
         {
-          icon: '⚙️',
+          icon: MdSettings,
           label: 'Settings',
           href: '/admin/settings',
           roles: ['admin']
@@ -209,19 +224,19 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
       ],
       team_leader: [
         {
-          icon: '👥',
+          icon: MdPeople,
           label: 'My Team',
           href: '/team_leader/teams',
           roles: ['team_leader']
         },
         {
-          icon: '📊',
+          icon: MdFolder,
           label: 'Projects',
           href: '/team_leader/projects',
           roles: ['team_leader']
         },
         {
-          icon: '👤',
+          icon: MdPerson,
           label: 'Profile',
           href: '/team_leader/profile',
           roles: ['team_leader']
@@ -229,19 +244,19 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
       ],
       member: [
         {
-          icon: '📋',
+          icon: MdAssignment,
           label: 'My Tasks',
           href: '/member/tasks',
           roles: ['member']
         },
         {
-          icon: '📊',
+          icon: MdFolder,
           label: 'Projects',
           href: '/member/projects',
           roles: ['member']
         },
         {
-          icon: '👤',
+          icon: MdPerson,
           label: 'Profile',
           href: '/member/profile',
           roles: ['member']
@@ -259,7 +274,11 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
   );
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 section-neumorphic p-6 z-10">
+    <aside className="fixed left-0 top-0 h-screen w-64 section-neumorphic p-6 z-10"
+      style={{
+        borderRadius: '0 0px 0px 0 '
+      }}
+    >
       {/* Logo */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
@@ -273,6 +292,7 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
         {filteredItems.map((item) => {
           // Check if current page is active
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          const IconComponent = item.icon;
           
           return (
             <Link
@@ -280,13 +300,11 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
               href={item.href}
               className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 isActive 
-                  ? 'neumorphic-button bg-[var(--color-accent)] text-white shadow-lg font-semibold' 
+                  ? 'text-[var(--color-accent)] bg-[var(--color-accent)]shadow-lg font-semibold' 
                   : 'text-[var(--color-text-primary)] hover:text-[var(--color-accent)] hover:bg-white/50 neumorphic-button-hover'
               }`}
             >
-              <span className="text-xl group-hover:scale-110 transition-transform duration-200">
-                {item.icon}
-              </span>
+              <IconComponent className="text-xl group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">{item.label}</span>
             </Link>
           );
@@ -301,9 +319,11 @@ const Sidebar: React.FC<SidebarProps> = ({ userRole }) => {
           disabled={isLoggingOut}
           className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed neumorphic-button-hover cursor-pointer"
         >
-          <span className="text-xl group-hover:scale-110 transition-transform duration-200">
-            {isLoggingOut ? '⏳' : '🚪'}
-          </span>
+          {isLoggingOut ? (
+            <MdAccessTime className="text-xl group-hover:scale-110 transition-transform duration-200" />
+          ) : (
+            <MdLogout className="text-xl group-hover:scale-110 transition-transform duration-200" />
+          )}
           <span className="font-medium">
             {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
           </span>
