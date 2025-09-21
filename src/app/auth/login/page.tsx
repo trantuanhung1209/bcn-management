@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const LoginPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -74,11 +75,6 @@ const LoginPage: React.FC = () => {
           // Set auth cookie for server-side authentication
           document.cookie = `auth-token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
           
-          // Verify it was saved
-          console.log('Verification - userData from localStorage:', localStorage.getItem('userData'));
-          console.log('Verification - authToken from localStorage:', localStorage.getItem('authToken'));
-          console.log('Verification - auth cookie set:', document.cookie.includes('auth-token'));
-          
           // Set managed team based on user's field or teams
           if (user.role === 'admin') {
             localStorage.setItem('managedTeam', 'all');
@@ -121,8 +117,8 @@ const LoginPage: React.FC = () => {
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-            <span className="text-2xl text-white font-bold">BM</span>
+          <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center">
+            <Image src="/favicon/web-app-manifest-512x512.png" alt="TeamHub Logo" width={100} height={100} />
           </div>
           <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-2">
             Đăng Nhập
